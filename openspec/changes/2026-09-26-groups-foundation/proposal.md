@@ -29,10 +29,10 @@ Persist **groups** and **memberships** so Day 4 RBAC (organizer vs player, last-
 
 ## Acceptance
 
-- [ ] Migration creates `groups` and `group_memberships` on a fresh database.
-- [ ] Sport and membership-role enums match SRS Appendix A.
-- [ ] Unique `(group_id, user_id)` prevents duplicate memberships.
-- [ ] No groups product UI or `/api/v1/groups` handlers.
+- [x] Migration creates `groups` and `group_memberships` on a fresh database.
+- [x] Sport and membership-role enums match SRS Appendix A.
+- [x] Unique `(group_id, user_id)` prevents duplicate memberships.
+- [x] No groups product UI or `/api/v1/groups` handlers.
 
 ## Traceability
 

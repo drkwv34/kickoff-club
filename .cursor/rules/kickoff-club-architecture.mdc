@@ -17,7 +17,7 @@ Read `docs/architecture/README.md` and linked docs before feature work.
 
 - Modules: `src/modules/{auth,groups,matches,rsvps,notifications}/`
 - Shared: `src/lib/` (config Zod boot, errors, logging)
-- Migrations: `migrations/` forward-only `YYYYMMDDHHMMSS_description.sql`
+- Persistence: Drizzle schema in `src/lib/db/`; forward-only SQL in `drizzle/` (`YYYYMMDDHHMMSS_description.sql`)
 
 ## Process gates
 
@@ -29,6 +29,6 @@ Read `docs/architecture/README.md` and linked docs before feature work.
 
 Error handling, transactionality, domain modeling, logging/redaction, design patterns, testing (unit/integration/e2e + CI), external integrations (SMTP retries/timeouts), frontend a11y/states — all defined under `docs/architecture/`. Follow them.
 
-## Day 1 scope
+## Day 2 scope
 
-Scaffold only unless an OpenSpec change explicitly authorizes product behavior.
+Schema foundation (`users`, `sessions`, `groups`, `group_memberships`) plus boot config. **No auth UI** unless a later OpenSpec change authorizes it.

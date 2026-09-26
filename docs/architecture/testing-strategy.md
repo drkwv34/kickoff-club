@@ -14,13 +14,15 @@ Tests **colocated** as `*.test.ts` next to source **or** under `__tests__/` with
 
 ## CI (GitHub Actions)
 
-Current scaffold pipeline:
+Current pipeline:
 
 1. `pnpm lint`
 2. `pnpm typecheck`
-3. `pnpm test` (Vitest smoke)
+3. `pnpm test` (Vitest)
+4. `pnpm db:migrate` against a Postgres 16 service container
+5. `pnpm db:verify` (core tables present)
 
-Future gates (SRS §7): integration against service containers, `next build`, Playwright with Compose.
+Future gates (SRS §7): broader integration tests, `next build`, Playwright with Compose.
 
 ## What to test hard
 

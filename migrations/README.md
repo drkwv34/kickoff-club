@@ -1,8 +1,22 @@
 # Database migrations
 
-## Tooling
+## Tooling choice
 
-Migration runner and ORM choice will be locked in an OpenSpec change (Day 2). Until then, this folder holds **naming conventions only** — no product tables on Day 1.
+**Drizzle ORM** (`drizzle-orm` + `drizzle-kit`) — see [`docs/architecture/persistence.md`](../docs/architecture/persistence.md).
+
+SQL artifacts live in [`drizzle/`](../drizzle/), not this folder. This README remains so Day 1 links keep working.
+
+## Commands
+
+```bash
+pnpm db:migrate    # apply pending migrations (needs DATABASE_URL)
+pnpm db:verify     # assert users/sessions/groups/group_memberships exist
+pnpm db:generate   # after changing src/lib/db/schema.ts
+```
+
+Compose: `docker compose up --build` runs the `migrate` service before `app`.
+
+CI: GitHub Actions applies migrations against a Postgres 16 service container, then `pnpm db:verify`.
 
 ## Forward-only
 
@@ -11,16 +25,12 @@ Migration runner and ORM choice will be locked in an OpenSpec change (Day 2). Un
 
 ## Naming
 
+drizzle-kit timestamp prefix:
+
 ```
 YYYYMMDDHHMMSS_short_snake_description.sql
 ```
 
-Example: `20260926120000_create_users.sql`
-
 ## Order
 
-Lexicographic by timestamp prefix. One logical change per file when possible.
-
-## CI
-
-Future: apply all migrations on fresh Postgres in GitHub Actions before integration tests.
+Journaled in `drizzle/meta/_journal.json`. One logical change per file when possible.

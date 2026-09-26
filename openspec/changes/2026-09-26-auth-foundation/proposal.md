@@ -33,11 +33,11 @@ Postgres-backed sessions (SRS §2.1, §6.1). No JWT. No auth UI in this change.
 
 ## Acceptance
 
-- [ ] Forward-only Drizzle migration applies on a fresh Postgres 16 database.
-- [ ] `users` and `sessions` exist with the columns above; email uniqueness is case-insensitive (`citext`).
-- [ ] `pnpm db:migrate` is documented; Compose and CI can run it.
-- [ ] Invalid env fails boot; no secrets committed.
-- [ ] No login/register pages or `/api/v1/auth/*` product handlers.
+- [x] Forward-only Drizzle migration applies on a fresh Postgres 16 database.
+- [x] `users` and `sessions` exist with the columns above; email uniqueness is case-insensitive (`citext`).
+- [x] `pnpm db:migrate` is documented; Compose and CI can run it.
+- [x] Invalid env fails boot; no secrets committed.
+- [x] No login/register pages or `/api/v1/auth/*` product handlers.
 
 ## Traceability
 
