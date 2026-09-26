@@ -1,0 +1,34 @@
+---
+description: kickoff-club architecture gate — layers, folders, OpenSpec, pnpm
+alwaysApply: true
+---
+
+# kickoff-club — agent rules
+
+Read `docs/architecture/README.md` and linked docs before feature work.
+
+## Layers (strict)
+
+`ui` (React, `src/app/`) → `api` (`src/app/api/v1/`) → `domain` (`src/modules/*/domain/`) → `infra` (db, mail).
+
+**Domain MUST NOT import `react`, `next/*`, or route handler types.**
+
+## Folders
+
+- Modules: `src/modules/{auth,groups,matches,rsvps,notifications}/`
+- Shared: `src/lib/` (config Zod boot, errors, logging)
+- Migrations: `migrations/` forward-only `YYYYMMDDHHMMSS_description.sql`
+
+## Process gates
+
+- Non-trivial features require an approved OpenSpec change under `openspec/changes/`.
+- REST JSON at `/api/v1`; conventional commits; no secrets in git.
+- Package manager: **pnpm** + committed lockfile.
+
+## Conventions (mandatory topics)
+
+Error handling, transactionality, domain modeling, logging/redaction, design patterns, testing (unit/integration/e2e + CI), external integrations (SMTP retries/timeouts), frontend a11y/states — all defined under `docs/architecture/`. Follow them.
+
+## Day 1 scope
+
+Scaffold only unless an OpenSpec change explicitly authorizes product behavior.
