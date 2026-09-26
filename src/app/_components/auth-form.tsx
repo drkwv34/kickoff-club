@@ -2,7 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { COMMON_TIMEZONES } from "@/modules/auth/domain/timezone";
+import { safeNextPath } from "./safe-next-path";
 import { useCsrfToken } from "./use-csrf-token";
 
 type Mode = "register" | "login";
@@ -15,6 +17,10 @@ type ApiErrorBody = {
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const csrf = useCsrfToken();
+  const searchParams = useSearchParams();
+  const nextPath = safeNextPath(searchParams.get("next"));
+  const nextQuery =
+    nextPath !== "/app" ? `?next=${encodeURIComponent(nextPath)}` : "";
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -58,7 +64,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setPending(false);
         return;
       }
-      window.location.assign("/app");
+      window.location.assign(nextPath);
     } catch {
       setError("Network error. Try again.");
       setPending(false);
@@ -161,11 +167,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <p className="form-switch">
         {isRegister ? (
           <>
-            Already have an account? <Link href="/login">Sign in</Link>
+            Already have an account? <Link href={`/login${nextQuery}`}>Sign in</Link>
           </>
         ) : (
           <>
-            New here? <Link href="/register">Register</Link>
+            New here? <Link href={`/register${nextQuery}`}>Register</Link>
           </>
         )}
       </p>
