@@ -1,3 +1,7 @@
 # auth module
 
-Session-based identity (FR-AUTH). **Day 2:** tables only (`users`, `sessions`) via Drizzle. Domain use-cases, password hashing, and HTTP/UI land in Day 3 (`feat/auth-sessions`).
+Session-based identity (FR-AUTH-001..003).
+
+- `domain/` — register, login, logout, session policy (no React/Next).
+- `infra/` — Argon2id hasher, Drizzle user/session repositories.
+- HTTP wiring lives in `src/app/api/v1/auth/` and `src/lib/http/`.

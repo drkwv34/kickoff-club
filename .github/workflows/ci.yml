@@ -56,11 +56,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit tests
-        run: pnpm test
-
       - name: Migrate
         run: pnpm db:migrate
 
       - name: Verify schema
         run: pnpm db:verify
+
+      - name: Unit and integration tests
+        run: pnpm test

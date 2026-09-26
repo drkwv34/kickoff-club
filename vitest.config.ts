@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/__tests__/**/*.ts"],
+    fileParallelism: false,
     env: {
       NODE_ENV: "test",
       DATABASE_URL: "postgresql://kickoff:kickoff@localhost:5432/kickoff",
