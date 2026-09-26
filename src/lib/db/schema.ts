@@ -115,6 +115,31 @@ export const groupMemberships = pgTable(
   ],
 );
 
+export const groupInvites = pgTable(
+  "group_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+    maxUses: integer("max_uses").notNull(),
+    useCount: integer("use_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("group_invites_code_unique").on(table.code),
+    index("group_invites_group_id_idx").on(table.groupId),
+    index("group_invites_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   memberships: many(groupMemberships),
@@ -128,6 +153,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 export const groupsRelations = relations(groups, ({ one, many }) => ({
   creator: one(users, { fields: [groups.createdBy], references: [users.id] }),
   memberships: many(groupMemberships),
+  invites: many(groupInvites),
 }));
 
 export const groupMembershipsRelations = relations(
@@ -144,10 +170,22 @@ export const groupMembershipsRelations = relations(
   }),
 );
 
+export const groupInvitesRelations = relations(groupInvites, ({ one }) => ({
+  group: one(groups, {
+    fields: [groupInvites.groupId],
+    references: [groups.id],
+  }),
+  creator: one(users, {
+    fields: [groupInvites.createdBy],
+    references: [users.id],
+  }),
+}));
+
 /** Table names CI/verify scripts assert after migrate. */
 export const CORE_TABLES = [
   "users",
   "sessions",
   "groups",
   "group_memberships",
+  "group_invites",
 ] as const;

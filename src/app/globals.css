@@ -173,3 +173,77 @@ input:focus-visible {
   align-items: flex-end;
   gap: 0.25rem;
 }
+
+.field select,
+.field textarea {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+}
+
+.group-list,
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.group-card,
+.panel {
+  background: var(--color-surface);
+  padding: var(--space-4);
+  border-radius: var(--radius);
+}
+
+.group-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.role-badge {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.join-form,
+.invite-form {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-6) 0;
+}
+
+.join-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.join-row input {
+  flex: 1 1 12rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+}
+
+.invite-result {
+  color: var(--color-muted);
+  word-break: break-all;
+}
+
+.invite-result code {
+  background: var(--color-bg);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius);
+}

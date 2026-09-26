@@ -4,7 +4,7 @@ Pickup-sports match organizer (RSVPs, waitlists, timezone-aware schedules, organ
 
 ## Status
 
-Day 3: **authentication**. Register, sign-in, and sign-out with Postgres-backed sessions (FR-AUTH-001..003). Groups/RSVP/matches are still later OpenSpec changes.
+Day 4: **groups, invites, RBAC**. Create a group (you become organizer), invite by code/link, join as player. Demoting the last organizer returns 409 `LAST_ORGANIZER`. Matches/RSVP are still later OpenSpec changes.
 
 ## Stack
 
@@ -26,7 +26,12 @@ docker compose up --build
 
 App: http://localhost:3000 · Mailpit UI: http://localhost:8025
 
-### Demo auth
+### Groups
+
+1. Sign in, open http://localhost:3000/app
+2. Create a group (you are organizer).
+3. Generate an invite link and open it as a second user (or paste the code).
+4. The invitee joins as **player**. Demoting the last organizer via `PATCH /api/v1/groups/:id/members/:userId` returns 409 `LAST_ORGANIZER`.
 
 1. Open http://localhost:3000/register
 2. Create an account (password ≥ 12 characters, IANA timezone e.g. `America/Bogota`)

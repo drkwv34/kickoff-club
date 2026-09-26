@@ -87,6 +87,12 @@ export function mapUnknownError(err: unknown): DomainError {
         "Email already registered",
       );
     }
+    if (constraint === "group_memberships_pk") {
+      return new DomainError(
+        DomainErrorCode.CONFLICT,
+        "Already a member of this group",
+      );
+    }
     return new DomainError(
       DomainErrorCode.UNIQUE_VIOLATION,
       "Resource already exists",

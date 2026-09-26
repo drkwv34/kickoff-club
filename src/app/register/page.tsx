@@ -1,10 +1,17 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AuthForm } from "../_components/auth-form";
+import { safeNextPath } from "../_components/safe-next-path";
 import { getServerSession } from "@/lib/http/server-session";
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   const session = await getServerSession();
-  if (session) redirect("/app");
+  const { next } = await searchParams;
+  if (session) redirect(safeNextPath(next));
 
   return (
     <main className="shell">
@@ -12,7 +19,9 @@ export default async function RegisterPage() {
       <p className="lede">
         Register with email and a password of at least 12 characters.
       </p>
-      <AuthForm mode="register" />
+      <Suspense>
+        <AuthForm mode="register" />
+      </Suspense>
     </main>
   );
 }
