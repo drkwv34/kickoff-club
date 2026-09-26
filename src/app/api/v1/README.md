@@ -1,5 +1,11 @@
 # API v1
 
-Product REST endpoints will live under this tree as `route.ts` segments, e.g. `groups/route.ts` → `GET/POST /api/v1/groups`.
+REST JSON under `/api/v1`. Auth is a session cookie (`kickoff_session`) plus CSRF on mutating routes.
 
-Scaffold: no v1 product routes yet.
+| Method | Path | Auth | Success |
+|--------|------|------|---------|
+| GET | `/api/v1/auth/csrf` | Public | 200 `{ csrfToken }` |
+| POST | `/api/v1/auth/register` | Public + CSRF | 201 |
+| POST | `/api/v1/auth/login` | Public + CSRF | 200 |
+| POST | `/api/v1/auth/logout` | CSRF (session optional) | 204 |
+| GET | `/api/v1/me` | User | 200 |

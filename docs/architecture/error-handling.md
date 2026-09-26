@@ -34,4 +34,4 @@ Catch at handler boundary; log at `error` with stack; return `INTERNAL_ERROR` JS
 
 ## FR-ERR alignment
 
-Uniform invalid login message; validation lists field keys; domain codes documented in OpenSpec changes when added.
+Uniform invalid login message (`Invalid email or password`); CSRF failures share `CSRF_REJECTED`; validation lists field keys; domain codes documented in OpenSpec changes when added.

@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **ID** | `2026-09-26-auth-foundation` |
-| **Status** | **approved** |
+| **Status** | **implemented** (schema shipped in PR #2; product auth is `2026-09-26-auth-sessions`) |
 | **Approved at** | 2026-09-26 |
 | **Approver** | Christian Agila (`drkwv34`) — in-repo solo review |
 | **SRS** | FR-AUTH-001..003 (schema + config only); NFR-MAINT-002 |

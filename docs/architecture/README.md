@@ -31,7 +31,7 @@ Agent and human implementers must follow these constraints (SRS §8). Feature co
 |------|------|
 | `src/app/` | Next.js routes, layouts, global UI |
 | `src/app/api/v1/` | REST JSON API (`/api/v1/...`) |
-| `src/modules/auth/` | Identity & sessions (future) |
+| `src/modules/auth/` | Identity & sessions (register / login / logout) |
 | `src/modules/groups/` | Groups, membership, invites |
 | `src/modules/matches/` | Matches & series |
 | `src/modules/rsvps/` | RSVP & waitlist promotion |

@@ -18,11 +18,11 @@ Current pipeline:
 
 1. `pnpm lint`
 2. `pnpm typecheck`
-3. `pnpm test` (Vitest)
-4. `pnpm db:migrate` against a Postgres 16 service container
-5. `pnpm db:verify` (core tables present)
+3. `pnpm db:migrate` against a Postgres 16 service container
+4. `pnpm db:verify` (core tables present)
+5. `pnpm test` (Vitest unit + auth integration against the same Postgres)
 
-Future gates (SRS §7): broader integration tests, `next build`, Playwright with Compose.
+Future gates (SRS §7): `next build`, Playwright with Compose.
 
 ## What to test hard
 
