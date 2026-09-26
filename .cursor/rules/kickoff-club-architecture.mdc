@@ -29,6 +29,6 @@ Read `docs/architecture/README.md` and linked docs before feature work.
 
 Error handling, transactionality, domain modeling, logging/redaction, design patterns, testing (unit/integration/e2e + CI), external integrations (SMTP retries/timeouts), frontend a11y/states — all defined under `docs/architecture/`. Follow them.
 
-## Day 3 scope
+## Day 4 scope
 
-Register / sign-in / sign-out with Argon2id, HttpOnly sessions, and CSRF. Groups UI, OAuth, and password reset are out of scope.
+Groups, invites, and last-organizer RBAC. No match creation, waitlist, or real invite email.

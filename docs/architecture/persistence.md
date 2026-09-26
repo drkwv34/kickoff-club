@@ -46,6 +46,6 @@ docker compose run --rm migrate
 
 Never edit a migration that has been applied on any shared environment. Fix mistakes with a **new** migration. drizzle-kit timestamp prefixes (`YYYYMMDDHHMMSS_*.sql`) match the repo naming convention.
 
-## Core tables (Day 2)
+## Core tables (Day 4)
 
-`users`, `sessions`, `groups`, `group_memberships`. Matches, RSVPs, invites, notifications are later OpenSpec changes.
+`users`, `sessions`, `groups`, `group_memberships`, `group_invites`. Matches, RSVPs, notifications are later OpenSpec changes.

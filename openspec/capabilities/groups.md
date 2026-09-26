@@ -1,19 +1,28 @@
 # Capability: groups
 
-**Status:** schema foundation (Day 2). RBAC/invites/UI: Day 4.  
+**Status:** implemented (Day 4) — create/join, invites, RBAC.  
 **SRS:** FR-GRP-001..005.  
-**OpenSpec:** [`changes/2026-09-26-groups-foundation`](../changes/2026-09-26-groups-foundation/).
+**OpenSpec:** [`changes/2026-09-26-groups-rbac`](../changes/2026-09-26-groups-rbac/). Schema: [`changes/2026-09-26-groups-foundation`](../changes/2026-09-26-groups-foundation/).
 
-## What exists now
+## What this capability does
 
-- Tables `groups` and `group_memberships`.
-- Enums `sport` (`futbol` \| `basketball` \| `volleyball` \| `tennis` \| `other`) and `membership_role` (`organizer` \| `player`).
-- `LAST_ORGANIZER` domain code mapped to HTTP 409 (rule not enforced yet).
+Named local clubs with group-scoped organizer/player roles:
 
-## What this capability will do
+- `POST /api/v1/groups` — creator becomes organizer.
+- `GET /api/v1/groups` — current user’s memberships.
+- `GET /api/v1/groups/:id` — members only (includes member list).
+- `POST /api/v1/groups/:id/invites` — organizer; default 7-day TTL, max 50 uses.
+- `GET /api/v1/invites/:code` — preview (code is the secret).
+- `POST /api/v1/invites/:code/accept` — join as **player**.
+- `PATCH /api/v1/groups/:id/members/:userId` — promote/demote.
+- `DELETE /api/v1/groups/:id/membership` — leave.
 
-Named local clubs; creator is organizer; invite codes; promote/demote with last-organizer protection; leave-group rules.
+Unknown invite → 404. Expired or exhausted → 410 `GONE`. Demoting or leaving as the last organizer → 409 `LAST_ORGANIZER`.
+
+UI: `/app` (create/list), `/app/groups/:id`, `/invite/:code`.
+
+Authz lives in `src/modules/groups/domain/authz.ts` (no React/Next).
 
 ## Explicitly not this capability (yet)
 
-Invites table, HTTP group APIs, group UI, match/RSVP coupling.
+Matches, RSVP/waitlist, real invite email (stub only).

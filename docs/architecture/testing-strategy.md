@@ -20,13 +20,13 @@ Current pipeline:
 2. `pnpm typecheck`
 3. `pnpm db:migrate` against a Postgres 16 service container
 4. `pnpm db:verify` (core tables present)
-5. `pnpm test` (Vitest unit + auth integration against the same Postgres)
+5. `pnpm test` (Vitest unit + auth/groups integration against the same Postgres)
 
 Future gates (SRS §7): `next build`, Playwright with Compose.
 
 ## What to test hard
 
-Authz matrix, waitlist concurrency, timezone DST fixtures, CSRF/session, idempotent RSVP.
+Authz matrix (groups roles + last organizer), waitlist concurrency, timezone DST fixtures, CSRF/session, idempotent RSVP.
 
 ## What not to over-test
 

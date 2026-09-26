@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **ID** | `2026-09-26-groups-rbac` |
-| **Status** | **approved** |
+| **Status** | **implemented** |
 | **Approved at** | 2026-09-26 |
 | **Approver** | Christian Agila (`drkwv34`) — in-repo solo review |
 | **SRS** | FR-GRP-001, FR-GRP-002, FR-GRP-003, FR-GRP-004, FR-GRP-005 (Should, member list on detail) |
@@ -55,13 +55,13 @@ Ship group create/join, invite codes, organizer/player roles, and last-organizer
 
 ## Acceptance
 
-- [ ] Creator is organizer; invitee joins as player.
-- [ ] Unknown invite code → 404; expired or max-uses exhausted → 410 `GONE`.
-- [ ] Single-use (`maxUses: 1`) second accept fails; multi-use respects max.
-- [ ] Demote/leave last organizer → 409 `LAST_ORGANIZER`.
-- [ ] Non-member cannot view group or create invites (403).
-- [ ] Domain authz has no `react` / `next` imports; matrix unit tests cover actor × action.
-- [ ] UI can create a group and accept an invite.
+- [x] Creator is organizer; invitee joins as player.
+- [x] Unknown invite code → 404; expired or max-uses exhausted → 410 `GONE`.
+- [x] Single-use (`maxUses: 1`) second accept fails; multi-use respects max.
+- [x] Demote/leave last organizer → 409 `LAST_ORGANIZER`.
+- [x] Non-member cannot view group or create invites (403).
+- [x] Domain authz has no `react` / `next` imports; matrix unit tests cover actor × action.
+- [x] UI can create a group and accept an invite.
 
 ## Traceability
 
