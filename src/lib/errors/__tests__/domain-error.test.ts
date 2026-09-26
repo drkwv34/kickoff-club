@@ -16,6 +16,10 @@ describe("domain error HTTP mapping", () => {
     expect(httpStatusForDomainCode(DomainErrorCode.EMAIL_TAKEN)).toBe(409);
   });
 
+  it("maps GONE to 410", () => {
+    expect(httpStatusForDomainCode(DomainErrorCode.GONE)).toBe(410);
+  });
+
   it("maps INVALID_CREDENTIALS to 401", () => {
     expect(httpStatusForDomainCode(DomainErrorCode.INVALID_CREDENTIALS)).toBe(
       401,
@@ -51,6 +55,15 @@ describe("mapUnknownError", () => {
     });
     expect(mapped.code).toBe(DomainErrorCode.EMAIL_TAKEN);
     expect(mapped.message).toBe("Email already registered");
+  });
+
+  it("maps group_memberships_pk to CONFLICT", () => {
+    const mapped = mapUnknownError({
+      code: "23505",
+      constraint: "group_memberships_pk",
+    });
+    expect(mapped.code).toBe(DomainErrorCode.CONFLICT);
+    expect(mapped.message).toBe("Already a member of this group");
   });
 
   it("passes DomainError through", () => {
