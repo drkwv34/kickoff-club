@@ -36,4 +36,9 @@ All product JSON under `/api/v1`. Breaking changes require new version or OpenSp
 
 ## Sessions
 
-Postgres-backed sessions preferred (SRS); HttpOnly cookies; CSRF on mutating cookie-auth requests (Day 3+).
+Postgres-backed sessions. Cookie `kickoff_session` is HttpOnly, SameSite=Lax, Secure in production.
+
+- **Idle TTL:** 14 days from last authenticated API use (`expires_at` slides; cookie refreshed on auth API responses).
+- **Absolute TTL:** 30 days from `sessions.created_at`.
+- Logout sets `revoked_at`; the raw token is never stored (SHA-256 `token_hash` only).
+- CSRF: double-submit cookie `kickoff_csrf` + `X-CSRF-Token` on mutating `/api/v1` requests (missing/mismatch → 403 `CSRF_REJECTED`).
