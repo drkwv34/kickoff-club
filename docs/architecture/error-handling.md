@@ -26,6 +26,8 @@ Route handlers map domain errors to HTTP status:
 
 **User-visible vs internal:** Clients receive `code`, safe `message`, and optional `details`. Logs include `requestId`, `code`, and internal context (never passwords, session tokens, or raw SMTP credentials).
 
+Postgres `23505` unique violations map to `UNIQUE_VIOLATION` (HTTP 409) via `mapUnknownError` — never return SQL `DETAIL` to clients (FR-ERR-004).
+
 ## Unknown errors
 
 Catch at handler boundary; log at `error` with stack; return `INTERNAL_ERROR` JSON.

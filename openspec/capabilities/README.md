@@ -4,8 +4,8 @@ Normative product requirements live in the project SRS. This folder holds **stab
 
 | Capability | Status | Notes |
 |------------|--------|-------|
-| `auth` | planned | Sessions, register/sign-in (FR-AUTH-*) |
-| `groups` | planned | Clubs, invites, RBAC (FR-GRP-*) |
+| [`auth`](./auth.md) | schema foundation | Tables `users`/`sessions`; register/sign-in is Day 3 |
+| [`groups`](./groups.md) | schema foundation | Tables `groups`/`group_memberships`; RBAC/invites Day 4 |
 | `matches` | planned | One-off + series, timezones (FR-MATCH-*) |
 | `rsvps` | planned | Capacity, waitlist, promotion (FR-RSVP-*) |
 | `notifications` | planned | In-app + email adapter (FR-NOTIF-*) |

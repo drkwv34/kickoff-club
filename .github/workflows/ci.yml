@@ -9,9 +9,29 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://kickoff:kickoff@localhost:5432/kickoff
+  SESSION_SECRET: ci-test-session-secret-min-32-characters
+  APP_BASE_URL: http://localhost:3000
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kickoff
+          POSTGRES_PASSWORD: kickoff
+          POSTGRES_DB: kickoff
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kickoff -d kickoff"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,3 +58,9 @@ jobs:
 
       - name: Unit tests
         run: pnpm test
+
+      - name: Migrate
+        run: pnpm db:migrate
+
+      - name: Verify schema
+        run: pnpm db:verify

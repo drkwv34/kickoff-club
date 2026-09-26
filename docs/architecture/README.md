@@ -37,7 +37,8 @@ Agent and human implementers must follow these constraints (SRS §8). Feature co
 | `src/modules/rsvps/` | RSVP & waitlist promotion |
 | `src/modules/notifications/` | In-app + email outbox |
 | `src/lib/` | Shared config, logging, HTTP helpers |
-| `migrations/` | Forward-only SQL (see [migrations](../migrations/README.md)) |
+| `src/lib/db/` | Drizzle schema + client |
+| `drizzle/` | Forward-only SQL migrations (see [persistence](./persistence.md)) |
 | `openspec/` | Change proposals |
 
 Each module typically contains:
@@ -57,6 +58,7 @@ Each module typically contains:
 - [External integrations](./external-integrations.md)
 - [Frontend conventions](./frontend-conventions.md)
 - [App-specific conventions](./app-conventions.md)
+- [Persistence (Drizzle)](./persistence.md)
 
 ## Config & API
 

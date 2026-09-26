@@ -38,4 +38,4 @@ Structured **JSON** logs (one object per line) with fields:
 
 Accept `x-request-id` from clients or generate; attach to all logs and outbound email headers where applicable.
 
-Implementation: `src/lib/logging/logger.ts` (stub until Day 2+).
+Implementation: `src/lib/logging/logger.ts` (`log`, `createLogger`, `newRequestId`; redacts passwords/tokens).

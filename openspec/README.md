@@ -8,7 +8,7 @@ Spec-driven development: **non-trivial feature work starts with a change proposa
 openspec/
   README.md           ← you are here
   capabilities/       ← stable capability descriptions (what the product can do)
-  changes/            ← proposed deltas (created per change; empty until Day 2+)
+  changes/            ← proposed deltas (created per change; Day 2+ foundations live here)
 ```
 
 ## Workflow
@@ -17,7 +17,7 @@ openspec/
 2. **Add** a folder under `changes/` named `YYYY-MM-DD-short-slug/` containing:
    - `proposal.md` — intent, scope, acceptance criteria, out of scope
    - `tasks.md` — implementation checklist (optional)
-3. **Review** — for solo work, mark `Status: approved` in `proposal.md` when ready to implement.
+3. **Review** — for solo work, mark `Status: approved` (table + approver) in `proposal.md` when ready to implement. That **is** the in-repo approval process until a second reviewer exists.
 4. **Implement** on a feature branch; reference the change id in PR title/body.
 5. **Close** — merge proposal updates into `capabilities/` when the change ships.
 
@@ -29,4 +29,4 @@ Scaffold-only work (tooling, CI, docs) may bypass OpenSpec when it does not chan
 
 ## Capabilities
 
-See [`capabilities/README.md`](capabilities/README.md) for the capability index stub. Detailed specs will grow as features land.
+See [`capabilities/README.md`](capabilities/README.md) for the capability index. Schema foundations for `auth` and `groups` are approved under `changes/`.
