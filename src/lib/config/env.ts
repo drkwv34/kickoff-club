@@ -4,33 +4,51 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  DATABASE_URL: z.string().url().optional(),
+  DATABASE_URL: z
+    .string()
+    .url("DATABASE_URL must be a valid Postgres connection URL"),
   SESSION_SECRET: z
     .string()
-    .min(32, "SESSION_SECRET must be at least 32 characters")
-    .optional(),
+    .min(32, "SESSION_SECRET must be at least 32 characters"),
   SMTP_HOST: z.string().min(1).optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
 
+export class EnvValidationError extends Error {
+  readonly fieldErrors: Record<string, string[] | undefined>;
+
+  constructor(fieldErrors: Record<string, string[] | undefined>) {
+    super(`Invalid environment: ${JSON.stringify(fieldErrors)}`);
+    this.name = "EnvValidationError";
+    this.fieldErrors = fieldErrors;
+  }
+}
+
 let cached: AppEnv | null = null;
 
 /**
- * Validates environment at boot. Scaffold: only NODE_ENV and APP_BASE_URL required.
- * Stricter requirements (DATABASE_URL, SESSION_SECRET) enforced when features wire up.
+ * Validates environment at boot. Fail fast: DATABASE_URL and SESSION_SECRET
+ * are required (Day 2+). Pass a custom `source` in tests to avoid the cache.
  */
-export function loadEnv(
-  source: NodeJS.ProcessEnv = process.env,
-): AppEnv {
-  if (cached) return cached;
+export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
+  const useCache = source === process.env;
+  if (useCache && cached) return cached;
+
   const parsed = envSchema.safeParse(source);
   if (!parsed.success) {
-    const message = parsed.error.flatten().fieldErrors;
-    throw new Error(`Invalid environment: ${JSON.stringify(message)}`);
+    throw new EnvValidationError(parsed.error.flatten().fieldErrors);
   }
-  cached = parsed.data;
-  return cached;
+
+  if (useCache) {
+    cached = parsed.data;
+  }
+  return parsed.data;
+}
+
+export function resetEnvCache(): void {
+  cached = null;
 }
