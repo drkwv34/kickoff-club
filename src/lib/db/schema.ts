@@ -140,6 +140,45 @@ export const groupInvites = pgTable(
   ],
 );
 
+/** SRS §6 — match lifecycle. */
+export const matchStatusEnum = pgEnum("match_status", [
+  "scheduled",
+  "cancelled",
+]);
+
+export const matches = pgTable(
+  "matches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    seriesId: uuid("series_id"),
+    title: text("title").notNull(),
+    sport: sportEnum("sport").notNull(),
+    venue: text("venue").notNull(),
+    startAt: timestamp("start_at", { withTimezone: true, mode: "date" }).notNull(),
+    endAt: timestamp("end_at", { withTimezone: true, mode: "date" }).notNull(),
+    timezone: text("timezone").notNull(),
+    capacity: integer("capacity").notNull(),
+    description: text("description"),
+    status: matchStatusEnum("status").notNull().default("scheduled"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("matches_group_id_start_at_idx").on(table.groupId, table.startAt),
+    index("matches_status_start_at_idx").on(table.status, table.startAt),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   memberships: many(groupMemberships),
@@ -154,6 +193,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   creator: one(users, { fields: [groups.createdBy], references: [users.id] }),
   memberships: many(groupMemberships),
   invites: many(groupInvites),
+  matches: many(matches),
 }));
 
 export const groupMembershipsRelations = relations(
@@ -181,6 +221,17 @@ export const groupInvitesRelations = relations(groupInvites, ({ one }) => ({
   }),
 }));
 
+export const matchesRelations = relations(matches, ({ one }) => ({
+  group: one(groups, {
+    fields: [matches.groupId],
+    references: [groups.id],
+  }),
+  creator: one(users, {
+    fields: [matches.createdBy],
+    references: [users.id],
+  }),
+}));
+
 /** Table names CI/verify scripts assert after migrate. */
 export const CORE_TABLES = [
   "users",
@@ -188,4 +239,5 @@ export const CORE_TABLES = [
   "groups",
   "group_memberships",
   "group_invites",
+  "matches",
 ] as const;

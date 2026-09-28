@@ -6,7 +6,7 @@ Normative product requirements live in the project SRS. This folder holds **stab
 |------------|--------|-------|
 | [`auth`](./auth.md) | implemented | Register / session cookies / CSRF (Day 3) |
 | [`groups`](./groups.md) | implemented | Create/join, invites, last-organizer RBAC (Day 4) |
-| `matches` | planned | One-off + series, timezones (FR-MATCH-*) |
+| `matches` | implemented (Day 5) | One-off + timezones — see [`matches.md`](./matches.md) |
 | `rsvps` | planned | Capacity, waitlist, promotion (FR-RSVP-*) |
 | `notifications` | planned | In-app + email adapter (FR-NOTIF-*) |
 | `noshow` | planned | Organizer marking (FR-NOSHOW-*) |
