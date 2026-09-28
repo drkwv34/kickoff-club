@@ -4,17 +4,19 @@ import {
   groupInvites,
   groupMemberships,
   groups,
+  matches,
   sessions,
   users,
 } from "../schema";
 
 describe("core drizzle schema", () => {
-  it("exports the Day 4 tables", () => {
+  it("exports the core tables", () => {
     expect(users).toBeDefined();
     expect(sessions).toBeDefined();
     expect(groups).toBeDefined();
     expect(groupMemberships).toBeDefined();
     expect(groupInvites).toBeDefined();
+    expect(matches).toBeDefined();
   });
 
   it("lists table names for migrate verify", () => {
@@ -24,6 +26,7 @@ describe("core drizzle schema", () => {
       "groups",
       "group_memberships",
       "group_invites",
+      "matches",
     ]);
   });
 });

@@ -25,4 +25,4 @@ Authz lives in `src/modules/groups/domain/authz.ts` (no React/Next).
 
 ## Explicitly not this capability (yet)
 
-Matches, RSVP/waitlist, real invite email (stub only).
+RSVP/waitlist, real invite email (stub only). Matches are a separate capability (`matches.md`).

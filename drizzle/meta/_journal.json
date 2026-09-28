@@ -15,6 +15,13 @@
       "when": 1790432819261,
       "tag": "20260926142659_create_group_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790521320000,
+      "tag": "20260928130200_create_matches",
+      "breakpoints": true
     }
   ]
 }
