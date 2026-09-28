@@ -64,3 +64,6 @@ jobs:
 
       - name: Unit and integration tests
         run: pnpm test
+
+      - name: OpenSpec validate
+        run: pnpm openspec:validate

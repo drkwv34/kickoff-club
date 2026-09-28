@@ -1,32 +1,70 @@
 # OpenSpec — kickoff-club
 
-Spec-driven development: **non-trivial feature work starts with a change proposal** in this directory, not with ad-hoc commits.
+This repo uses the **[Fission-AI OpenSpec](https://github.com/Fission-AI/OpenSpec)** framework (`@fission-ai/openspec` CLI), not a hand-rolled Markdown process.
+
+## Prerequisites
+
+- Node ≥ 20.19
+- CLI (global or via `npx`):
+
+```bash
+npm install -g @fission-ai/openspec@latest
+export PATH="$(npm prefix -g)/bin:$PATH"
+openspec --version
+```
+
+Refresh Cursor skills and slash commands after CLI upgrades:
+
+```bash
+openspec update --force
+```
 
 ## Layout
 
 ```
 openspec/
-  README.md           ← you are here
-  capabilities/       ← stable capability descriptions (what the product can do)
-  changes/            ← proposed deltas (created per change; Day 2+ foundations live here)
+  config.yaml          # schema + optional project context
+  specs/               # main capability specs (source of truth)
+    <capability>/spec.md
+  changes/             # active change proposals (spec-driven artifacts)
+  changes/archive/     # merged / historical changes
 ```
 
-## Workflow
+Legacy hand-authored `capabilities/` summaries were migrated into `specs/<capability>/spec.md`. Historical change folders live under `changes/archive/` with proposals and tasks preserved.
 
-1. **Identify** the capability or FR IDs affected (see SRS / `capabilities/`).
-2. **Add** a folder under `changes/` named `YYYY-MM-DD-short-slug/` containing:
-   - `proposal.md` — intent, scope, acceptance criteria, out of scope
-   - `tasks.md` — implementation checklist (optional)
-3. **Review** — for solo work, mark `Status: approved` (table + approver) in `proposal.md` when ready to implement. That **is** the in-repo approval process until a second reviewer exists.
-4. **Implement** on a feature branch; reference the change id in PR title/body.
-5. **Close** — merge proposal updates into `capabilities/` when the change ships.
+## Workflow (Cursor)
 
-## Gate (after bootstrap)
+OpenSpec wires Cursor through generated skills and commands:
 
-Once this skeleton exists on `main`, **do not** add product behavior (auth, RSVP, waitlist, etc.) without an approved proposal under `openspec/changes/`.
+| Step | Cursor | Skill |
+|------|--------|--------|
+| Propose | `/opsx-propose` | `.cursor/skills/openspec-propose` |
+| Implement | `/opsx-apply` | `.cursor/skills/openspec-apply-change` |
+| Sync specs | `/opsx-sync` | `.cursor/skills/openspec-sync-specs` |
+| Archive | `/opsx-archive` | `.cursor/skills/openspec-archive-change` |
+| Refresh CLI artifacts | `/opsx-update` | `.cursor/skills/openspec-update-change` |
 
-Scaffold-only work (tooling, CI, docs) may bypass OpenSpec when it does not change product semantics.
+Typical loop:
 
-## Capabilities
+1. **Propose** — `/opsx-propose "short description"` creates a change under `openspec/changes/` with `proposal.md`, delta specs, `design.md`, and `tasks.md` (per the `spec-driven` schema in `config.yaml`).
+2. **Apply** — `/opsx-apply` implements against `tasks.md` on a feature branch.
+3. **Validate** — `openspec validate <change-id> --strict` (or `pnpm openspec:validate` for repo-wide checks).
+4. **Archive** — after merge, `/opsx-archive` or `openspec archive <change-id> --yes` moves the change to `changes/archive/` and updates main specs.
 
-See [`capabilities/README.md`](capabilities/README.md) for the capability index. Schema foundations for `auth` and `groups` are approved under `changes/`.
+Use `openspec list`, `openspec status --change <id>`, and `openspec instructions` for CLI-driven status and artifact guidance.
+
+## Gate
+
+Non-trivial **product** work (auth, groups, matches, RSVP, etc.) needs an OpenSpec change before implementation. Tooling, CI, and docs-only work may bypass OpenSpec when product semantics do not change.
+
+Normative FR IDs remain in the project SRS; `openspec/specs/` holds in-repo capability requirements with scenarios.
+
+## Validation
+
+```bash
+pnpm openspec:validate          # all specs + active changes
+openspec validate --changes     # active changes only
+openspec validate --specs       # main specs only
+```
+
+Archived changes are excluded from default bulk validation; completed archive entries from the pre-Fission migration use `skip_specs: true` because requirements were consolidated into `specs/` manually.

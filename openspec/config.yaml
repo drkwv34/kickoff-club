@@ -1,0 +1,29 @@
+schema: spec-driven
+
+context: |
+  kickoff-club: Next.js App Router UI, REST JSON at /api/v1, pnpm package manager.
+  Layers: ui → api → domain (src/modules/*/domain/) → infra (Drizzle Postgres).
+  Domain MUST NOT import react or next/*. Conventional commits; no secrets in git.
+  Day 4+ scope: groups, invites, last-organizer RBAC; matches one-off; no waitlist/RSVP in current pin unless a change proposes it.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
