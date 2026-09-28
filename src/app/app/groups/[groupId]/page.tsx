@@ -5,6 +5,9 @@ import { getServerSession } from "@/lib/http/server-session";
 import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
 import { getGroupsDeps } from "@/modules/groups/composition";
 import { getGroupDetail } from "@/modules/groups/domain/get-group";
+import { getMatchesDeps } from "@/modules/matches/composition";
+import { listMatchesForGroup } from "@/modules/matches/domain/list-matches";
+import { formatWallClock } from "@/modules/matches/domain/time-display";
 
 export default async function GroupDetailPage({
   params,
@@ -22,6 +25,11 @@ export default async function GroupDetailPage({
       groupId,
       session.user.id,
       getGroupsDeps(),
+    );
+    const { matches } = await listMatchesForGroup(
+      groupId,
+      session.user.id,
+      getMatchesDeps(),
     );
     const isOrganizer = detail.role === "organizer";
 
@@ -48,6 +56,34 @@ export default async function GroupDetailPage({
             </li>
           ))}
         </ul>
+
+        <h2>Matches</h2>
+        {isOrganizer ? (
+          <p>
+            <Link className="btn btn-secondary" href={`/app/groups/${groupId}/matches/new`}>
+              Create match
+            </Link>
+          </p>
+        ) : null}
+        {matches.length === 0 ? (
+          <p className="empty-state">
+            No matches yet — organizers can schedule a pickup session.
+          </p>
+        ) : (
+          <ul className="match-list">
+            {matches.map((match) => (
+              <li key={match.id}>
+                <Link href={`/app/matches/${match.id}`}>
+                  {match.title}
+                  {match.status === "cancelled" ? " (cancelled)" : ""}
+                </Link>
+                <span className="match-list-meta">
+                  {formatWallClock(match.startAt, match.timezone)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         {isOrganizer ? <CreateInviteForm groupId={groupId} /> : null}
       </main>

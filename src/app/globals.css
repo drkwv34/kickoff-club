@@ -247,3 +247,67 @@ input:focus-visible {
   padding: 0.15rem 0.4rem;
   border-radius: var(--radius);
 }
+
+.field-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.field-row .field {
+  flex: 1 1 10rem;
+}
+
+.btn-secondary {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: var(--color-bg);
+}
+
+.match-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-4) 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.match-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+}
+
+.match-list-meta {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.empty-state {
+  color: var(--color-muted);
+}
+
+.tz-label,
+.tz-hint {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.status-badge.status-cancelled {
+  color: var(--color-danger);
+}
+
+.match-schedule {
+  margin: var(--space-6) 0;
+}
+
+.match-actions {
+  margin-top: var(--space-6);
+}

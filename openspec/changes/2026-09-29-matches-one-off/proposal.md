@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **ID** | `2026-09-29-matches-one-off` |
-| **Status** | **approved** |
+| **Status** | **implemented** |
 | **Approved at** | 2026-09-29 |
 | **Approver** | Christian Agila (`drkwv34`) — in-repo solo review |
 | **SRS** | FR-MATCH-001, FR-MATCH-003, FR-MATCH-004, FR-MATCH-005 |
