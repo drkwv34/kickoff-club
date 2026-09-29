@@ -63,6 +63,13 @@ export default async function GroupDetailPage({
             <Link className="btn btn-secondary" href={`/app/groups/${groupId}/matches/new`}>
               Create match
             </Link>
+            {" "}
+            <Link
+              className="btn btn-secondary"
+              href={`/app/groups/${groupId}/matches/series/new`}
+            >
+              Create series
+            </Link>
           </p>
         ) : null}
         {matches.length === 0 ? (

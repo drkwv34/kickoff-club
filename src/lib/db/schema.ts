@@ -2,6 +2,7 @@ import {
   customType,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -146,6 +147,21 @@ export const matchStatusEnum = pgEnum("match_status", [
   "cancelled",
 ]);
 
+export const matchSeries = pgTable(
+  "match_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    rruleJson: jsonb("rrule_json").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("match_series_group_id_idx").on(table.groupId)],
+);
+
 export const matches = pgTable(
   "matches",
   {
@@ -153,7 +169,9 @@ export const matches = pgTable(
     groupId: uuid("group_id")
       .notNull()
       .references(() => groups.id, { onDelete: "cascade" }),
-    seriesId: uuid("series_id"),
+    seriesId: uuid("series_id").references(() => matchSeries.id, {
+      onDelete: "set null",
+    }),
     title: text("title").notNull(),
     sport: sportEnum("sport").notNull(),
     venue: text("venue").notNull(),
@@ -194,6 +212,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   memberships: many(groupMemberships),
   invites: many(groupInvites),
   matches: many(matches),
+  series: many(matchSeries),
 }));
 
 export const groupMembershipsRelations = relations(
@@ -221,10 +240,22 @@ export const groupInvitesRelations = relations(groupInvites, ({ one }) => ({
   }),
 }));
 
+export const matchSeriesRelations = relations(matchSeries, ({ one, many }) => ({
+  group: one(groups, {
+    fields: [matchSeries.groupId],
+    references: [groups.id],
+  }),
+  matches: many(matches),
+}));
+
 export const matchesRelations = relations(matches, ({ one }) => ({
   group: one(groups, {
     fields: [matches.groupId],
     references: [groups.id],
+  }),
+  series: one(matchSeries, {
+    fields: [matches.seriesId],
+    references: [matchSeries.id],
   }),
   creator: one(users, {
     fields: [matches.createdBy],
@@ -239,5 +270,6 @@ export const CORE_TABLES = [
   "groups",
   "group_memberships",
   "group_invites",
+  "match_series",
   "matches",
 ] as const;
