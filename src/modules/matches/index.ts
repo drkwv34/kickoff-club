@@ -5,6 +5,8 @@ export { listMatchesForGroup } from "./domain/list-matches";
 export { getMatchDetail } from "./domain/get-match";
 export { updateMatch } from "./domain/update-match";
 export { cancelMatch } from "./domain/cancel-match";
+export { createMatchSeries } from "./domain/create-series";
+export { cancelMatchSeries } from "./domain/cancel-series";
 export {
   formatWallClock,
   presentMatchTimes,

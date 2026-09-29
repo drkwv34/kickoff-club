@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { matches } from "@/lib/db/schema";
 import { mapUnknownError } from "@/lib/errors/domain-error";
@@ -55,6 +55,35 @@ export function createMatchRepository(db: Db): MatchRepository {
       }
     },
 
+    async createMany(inputs) {
+      if (inputs.length === 0) {
+        return [];
+      }
+      try {
+        const rows = await db
+          .insert(matches)
+          .values(
+            inputs.map((input) => ({
+              groupId: input.groupId,
+              seriesId: input.seriesId,
+              title: input.title,
+              sport: input.sport,
+              venue: input.venue,
+              startAt: input.startAt,
+              endAt: input.endAt,
+              timezone: input.timezone,
+              capacity: input.capacity,
+              description: input.description,
+              createdBy: input.createdBy,
+            })),
+          )
+          .returning();
+        return rows.map(toMatch);
+      } catch (err) {
+        throw mapUnknownError(err);
+      }
+    },
+
     async findById(id) {
       const [row] = await db
         .select()
@@ -71,6 +100,30 @@ export function createMatchRepository(db: Db): MatchRepository {
         .where(eq(matches.groupId, groupId))
         .orderBy(asc(matches.startAt));
       return rows.map(toMatch);
+    },
+
+    async listBySeriesId(seriesId) {
+      const rows = await db
+        .select()
+        .from(matches)
+        .where(eq(matches.seriesId, seriesId))
+        .orderBy(asc(matches.startAt));
+      return rows.map(toMatch);
+    },
+
+    async cancelScheduledBySeriesId(seriesId, updatedAt) {
+      try {
+        const rows = await db
+          .update(matches)
+          .set({ status: "cancelled", updatedAt })
+          .where(
+            and(eq(matches.seriesId, seriesId), eq(matches.status, "scheduled")),
+          )
+          .returning();
+        return rows.map(toMatch);
+      } catch (err) {
+        throw mapUnknownError(err);
+      }
     },
 
     async update(id, patch) {
