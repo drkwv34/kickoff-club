@@ -4,6 +4,7 @@ import {
   groupInvites,
   groupMemberships,
   groups,
+  matchSeries,
   matches,
   sessions,
   users,
@@ -16,6 +17,7 @@ describe("core drizzle schema", () => {
     expect(groups).toBeDefined();
     expect(groupMemberships).toBeDefined();
     expect(groupInvites).toBeDefined();
+    expect(matchSeries).toBeDefined();
     expect(matches).toBeDefined();
   });
 
@@ -26,6 +28,7 @@ describe("core drizzle schema", () => {
       "groups",
       "group_memberships",
       "group_invites",
+      "match_series",
       "matches",
     ]);
   });
