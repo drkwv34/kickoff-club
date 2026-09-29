@@ -3,6 +3,13 @@ import { isValidIanaTimeZone } from "@/modules/auth/domain/timezone";
 import { SPORTS } from "@/modules/groups/domain/types";
 import { validationErrorFromZod } from "@/modules/groups/validation";
 import {
+  MAX_WEEKLY_INTERVAL,
+  MIN_WEEKLY_INTERVAL,
+  MAX_SERIES_COUNT,
+  MIN_SERIES_COUNT,
+  WEEKDAYS,
+} from "./domain/recurrence";
+import {
   MAX_MATCH_CAPACITY,
   MIN_MATCH_CAPACITY,
 } from "./domain/types";
@@ -82,3 +89,42 @@ export const updateMatchBodySchema = z
 
 export type CreateMatchBody = z.infer<typeof createMatchBodySchema>;
 export type UpdateMatchBody = z.infer<typeof updateMatchBodySchema>;
+
+const localDate = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD for until date");
+
+export const weeklyRecurrenceSchema = z
+  .object({
+    freq: z.literal("weekly"),
+    interval: z
+      .number()
+      .int()
+      .min(MIN_WEEKLY_INTERVAL)
+      .max(MAX_WEEKLY_INTERVAL),
+    byWeekday: z
+      .array(z.enum(WEEKDAYS))
+      .min(1, "Pick at least one weekday")
+      .max(7),
+    count: z.number().int().min(MIN_SERIES_COUNT).max(MAX_SERIES_COUNT).optional(),
+    until: localDate.optional(),
+  })
+  .refine(
+    (body) =>
+      (body.count !== undefined && body.until === undefined) ||
+      (body.count === undefined && body.until !== undefined),
+    { message: "Provide either count or until, not both" },
+  )
+  .transform((body) => ({
+    ...body,
+    byWeekday: [...new Set(body.byWeekday)],
+  }));
+
+export const createSeriesBodySchema = z.object({
+  ...matchFields,
+  timezone: matchFields.timezone.optional(),
+  recurrence: weeklyRecurrenceSchema,
+});
+
+export type CreateSeriesBody = z.infer<typeof createSeriesBodySchema>;

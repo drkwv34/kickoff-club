@@ -1,6 +1,15 @@
 import type { GroupRepository, MembershipRepository } from "@/modules/groups/domain/ports";
 import type { Sport } from "@/modules/groups/domain/types";
+import type { SeriesRecord, WeeklyRecurrenceRule } from "./series-types";
 import type { MatchRecord, MatchStatus } from "./types";
+
+export type SeriesRepository = {
+  create(input: {
+    groupId: string;
+    rruleJson: WeeklyRecurrenceRule;
+  }): Promise<SeriesRecord>;
+  findById(id: string): Promise<SeriesRecord | null>;
+};
 
 export type MatchRepository = {
   create(input: {
@@ -16,8 +25,25 @@ export type MatchRepository = {
     description: string | null;
     createdBy: string;
   }): Promise<MatchRecord>;
+  createMany(
+    inputs: Array<{
+      groupId: string;
+      seriesId: string;
+      title: string;
+      sport: Sport;
+      venue: string;
+      startAt: Date;
+      endAt: Date;
+      timezone: string;
+      capacity: number;
+      description: string | null;
+      createdBy: string;
+    }>,
+  ): Promise<MatchRecord[]>;
   findById(id: string): Promise<MatchRecord | null>;
   listByGroupId(groupId: string): Promise<MatchRecord[]>;
+  listBySeriesId(seriesId: string): Promise<MatchRecord[]>;
+  cancelScheduledBySeriesId(seriesId: string, updatedAt: Date): Promise<MatchRecord[]>;
   update(
     id: string,
     patch: {
@@ -35,9 +61,16 @@ export type MatchRepository = {
   ): Promise<MatchRecord>;
 };
 
+export type MatchStores = {
+  matches: MatchRepository;
+  series: SeriesRepository;
+};
+
 export type MatchesDeps = {
   matches: MatchRepository;
+  series: SeriesRepository;
   groups: GroupRepository;
   memberships: MembershipRepository;
   clock: () => Date;
+  runInTransaction: <T>(work: (stores: MatchStores) => Promise<T>) => Promise<T>;
 };
