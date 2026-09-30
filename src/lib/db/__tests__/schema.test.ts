@@ -6,6 +6,7 @@ import {
   groups,
   matchSeries,
   matches,
+  rsvps,
   sessions,
   users,
 } from "../schema";
@@ -19,6 +20,7 @@ describe("core drizzle schema", () => {
     expect(groupInvites).toBeDefined();
     expect(matchSeries).toBeDefined();
     expect(matches).toBeDefined();
+    expect(rsvps).toBeDefined();
   });
 
   it("lists table names for migrate verify", () => {
@@ -30,6 +32,7 @@ describe("core drizzle schema", () => {
       "group_invites",
       "match_series",
       "matches",
+      "rsvps",
     ]);
   });
 });
