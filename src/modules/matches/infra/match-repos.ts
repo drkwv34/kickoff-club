@@ -93,6 +93,16 @@ export function createMatchRepository(db: Db): MatchRepository {
       return row ? toMatch(row) : null;
     },
 
+    async findByIdForUpdate(id) {
+      const [row] = await db
+        .select()
+        .from(matches)
+        .where(eq(matches.id, id))
+        .for("update")
+        .limit(1);
+      return row ? toMatch(row) : null;
+    },
+
     async listByGroupId(groupId) {
       const rows = await db
         .select()

@@ -8,6 +8,8 @@ import { getGroupDetail } from "@/modules/groups/domain/get-group";
 import { getMatchesDeps } from "@/modules/matches/composition";
 import { getMatchDetail } from "@/modules/matches/domain/get-match";
 import { presentMatchTimes } from "@/modules/matches/domain/time-display";
+import { getMatchRsvpSummary, getRsvpsDeps } from "@/modules/rsvps";
+import { RsvpControls } from "@/app/_components/rsvp-controls";
 
 export default async function MatchDetailPage({
   params,
@@ -38,6 +40,14 @@ export default async function MatchDetailPage({
       matchTimeZone: match.timezone,
       viewerTimeZone: session.user.timezone,
     });
+    const rsvpSummary = await getMatchRsvpSummary(
+      match.id,
+      session.user.id,
+      getRsvpsDeps(),
+    );
+    const matchOpen =
+      match.status === "scheduled" &&
+      new Date(match.startAt).getTime() > Date.now();
 
     return (
       <main className="shell">
@@ -82,6 +92,14 @@ export default async function MatchDetailPage({
             <p>{match.description}</p>
           </section>
         ) : null}
+
+        <RsvpControls
+          matchId={match.id}
+          capacity={match.capacity}
+          goingCount={rsvpSummary.goingCount}
+          viewerRsvp={rsvpSummary.viewerRsvp}
+          matchOpen={matchOpen}
+        />
 
         {isOrganizer && match.status === "scheduled" ? (
           <CancelMatchButton matchId={match.id} />

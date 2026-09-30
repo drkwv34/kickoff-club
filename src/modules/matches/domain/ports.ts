@@ -41,6 +41,7 @@ export type MatchRepository = {
     }>,
   ): Promise<MatchRecord[]>;
   findById(id: string): Promise<MatchRecord | null>;
+  findByIdForUpdate(id: string): Promise<MatchRecord | null>;
   listByGroupId(groupId: string): Promise<MatchRecord[]>;
   listBySeriesId(seriesId: string): Promise<MatchRecord[]>;
   cancelScheduledBySeriesId(seriesId: string, updatedAt: Date): Promise<MatchRecord[]>;

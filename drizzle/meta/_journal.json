@@ -29,6 +29,13 @@
       "when": 1790606400000,
       "tag": "20260930120000_create_match_series",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790692800000,
+      "tag": "20261001120000_create_rsvps",
+      "breakpoints": true
     }
   ]
 }

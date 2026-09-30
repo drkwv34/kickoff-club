@@ -1,0 +1,53 @@
+import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
+import { MATCH_NOT_FOUND_MESSAGE } from "@/modules/matches/domain/messages";
+import {
+  assertMatchOpenForRsvp,
+  loadMatchForRsvpMember,
+} from "./access";
+import { RSVP_NOT_FOUND_MESSAGE } from "./messages";
+import type { RsvpsDeps } from "./ports";
+import { toPublicRsvp, type PublicRsvp } from "./types";
+
+export async function cancelMyRsvp(
+  actorId: string,
+  matchId: string,
+  deps: RsvpsDeps,
+): Promise<{ rsvp: PublicRsvp }> {
+  await loadMatchForRsvpMember(matchId, actorId, deps);
+
+  const result = await deps.runInTransaction(async (stores) => {
+    const locked = await stores.matches.findByIdForUpdate(matchId);
+    if (!locked) {
+      throw new DomainError(DomainErrorCode.NOT_FOUND, MATCH_NOT_FOUND_MESSAGE);
+    }
+    const now = deps.clock();
+    await assertMatchOpenForRsvp(locked, now);
+
+    const existing = await stores.rsvps.findByMatchAndUser(matchId, actorId);
+    if (!existing) {
+      throw new DomainError(DomainErrorCode.NOT_FOUND, RSVP_NOT_FOUND_MESSAGE);
+    }
+    if (existing.status === "cancelled") {
+      return existing;
+    }
+
+    const wasWaitlisted = existing.status === "waitlisted";
+    const saved = await stores.rsvps.save({
+      id: existing.id,
+      matchId,
+      userId: actorId,
+      status: "cancelled",
+      waitlistPosition: null,
+      updatedAt: now,
+      createdAt: existing.createdAt,
+    });
+
+    if (wasWaitlisted) {
+      await stores.rsvps.compactWaitlist(matchId);
+    }
+
+    return saved;
+  });
+
+  return { rsvp: toPublicRsvp(result) };
+}

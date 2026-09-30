@@ -4,6 +4,7 @@ import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
 import { getMatchesDeps } from "@/modules/matches/composition";
 import { getMatchDetail } from "@/modules/matches/domain/get-match";
+import { getMatchRsvpSummary, getRsvpsDeps } from "@/modules/rsvps";
 import { updateMatch } from "@/modules/matches/domain/update-match";
 import { parseInstant } from "@/modules/matches/domain/schedule";
 import {
@@ -24,8 +25,13 @@ export async function GET(
     const session = await requireSession(request);
     const { matchId } = await context.params;
     const result = await getMatchDetail(matchId, session.user.id, getMatchesDeps());
+    const rsvpSummary = await getMatchRsvpSummary(
+      matchId,
+      session.user.id,
+      getRsvpsDeps(),
+    );
     logger.info("get match", { userId: session.user.id, matchId });
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, ...rsvpSummary });
   });
 }
 

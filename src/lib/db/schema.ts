@@ -147,6 +147,14 @@ export const matchStatusEnum = pgEnum("match_status", [
   "cancelled",
 ]);
 
+/** SRS Appendix A — RSVP status. */
+export const rsvpStatusEnum = pgEnum("rsvp_status", [
+  "going",
+  "waitlisted",
+  "declined",
+  "cancelled",
+]);
+
 export const matchSeries = pgTable(
   "match_series",
   {
@@ -248,7 +256,32 @@ export const matchSeriesRelations = relations(matchSeries, ({ one, many }) => ({
   matches: many(matches),
 }));
 
-export const matchesRelations = relations(matches, ({ one }) => ({
+export const rsvps = pgTable(
+  "rsvps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: rsvpStatusEnum("status").notNull(),
+    waitlistPosition: integer("waitlist_position"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("rsvps_match_id_user_id_unique").on(table.matchId, table.userId),
+    index("rsvps_match_id_status_idx").on(table.matchId, table.status),
+  ],
+);
+
+export const matchesRelations = relations(matches, ({ one, many }) => ({
   group: one(groups, {
     fields: [matches.groupId],
     references: [groups.id],
@@ -259,6 +292,18 @@ export const matchesRelations = relations(matches, ({ one }) => ({
   }),
   creator: one(users, {
     fields: [matches.createdBy],
+    references: [users.id],
+  }),
+  rsvps: many(rsvps),
+}));
+
+export const rsvpsRelations = relations(rsvps, ({ one }) => ({
+  match: one(matches, {
+    fields: [rsvps.matchId],
+    references: [matches.id],
+  }),
+  user: one(users, {
+    fields: [rsvps.userId],
     references: [users.id],
   }),
 }));
@@ -272,4 +317,5 @@ export const CORE_TABLES = [
   "group_invites",
   "match_series",
   "matches",
+  "rsvps",
 ] as const;
