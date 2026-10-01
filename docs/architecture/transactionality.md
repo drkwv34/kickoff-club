@@ -7,7 +7,7 @@
 
 ## Isolation
 
-- Default Postgres **`READ COMMITTED`**; promotion and capacity paths use **`SELECT … FOR UPDATE`** on match/rsvp rows as documented in waitlist OpenSpec.
+- Default Postgres **`READ COMMITTED`**; promotion and capacity paths use **`SELECT … FOR UPDATE`** on the match row (serializes competing cancels for one match). The earliest waitlisted RSVP row is selected with `ORDER BY waitlist_position, created_at` and updated to `going` inside the same transaction as the cancel/decline that freed the seat.
 - Avoid long-held transactions across HTTP client calls or SMTP.
 
 ## Idempotent writes

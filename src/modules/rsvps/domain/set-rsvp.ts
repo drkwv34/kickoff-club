@@ -4,6 +4,7 @@ import {
   assertMatchOpenForRsvp,
   loadMatchForRsvpMember,
 } from "./access";
+import { fillOpenSpotsFromWaitlist } from "./promote-waitlist";
 import type { RsvpStores, RsvpsDeps } from "./ports";
 import { toPublicRsvp, type PublicRsvp, type RsvpStatus } from "./types";
 
@@ -50,6 +51,7 @@ export async function setRsvp(
         return existing;
       }
       const wasWaitlisted = existing?.status === "waitlisted";
+      const wasGoing = existing?.status === "going";
       const saved = await stores.rsvps.save({
         id: existing?.id,
         matchId: input.matchId,
@@ -60,6 +62,14 @@ export async function setRsvp(
         createdAt: existing?.createdAt,
       });
       if (wasWaitlisted) {
+        await stores.rsvps.compactWaitlist(input.matchId);
+      } else if (wasGoing) {
+        await fillOpenSpotsFromWaitlist(
+          input.matchId,
+          locked.capacity,
+          stores,
+          now,
+        );
         await stores.rsvps.compactWaitlist(input.matchId);
       }
       return saved;

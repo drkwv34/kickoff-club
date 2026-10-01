@@ -62,6 +62,10 @@ docker compose up -d db
 docker compose run --rm migrate
 ```
 
+## Hard edges (waitlist promotion)
+
+When a `going` RSVP is cancelled or declined, promotion runs in the **same database transaction** as the spot opening: the match row is locked with `SELECT … FOR UPDATE`, the RSVP is updated, then the earliest waitlisted row (by `waitlist_position`, then `created_at`) is promoted until `going_count` reaches `capacity` or the waitlist is empty. Concurrent cancels on the same match serialize on the match lock so `going_count` cannot exceed capacity. See [`docs/architecture/transactionality.md`](docs/architecture/transactionality.md).
+
 ## Documentation
 
 | Path | Purpose |

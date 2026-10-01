@@ -102,5 +102,36 @@ export function createRsvpRepository(db: Db): RsvpRepository {
         position += 1;
       }
     },
+
+    async promoteEarliestWaitlisted(matchId, updatedAt) {
+      const [row] = await db
+        .select()
+        .from(rsvps)
+        .where(
+          and(eq(rsvps.matchId, matchId), eq(rsvps.status, "waitlisted")),
+        )
+        .orderBy(asc(rsvps.waitlistPosition), asc(rsvps.createdAt))
+        .limit(1)
+        .for("update");
+
+      if (!row) {
+        return null;
+      }
+
+      const [updated] = await db
+        .update(rsvps)
+        .set({
+          status: "going",
+          waitlistPosition: null,
+          updatedAt,
+        })
+        .where(eq(rsvps.id, row.id))
+        .returning();
+
+      if (!updated) {
+        throw new Error("promote waitlist update returned no row");
+      }
+      return toRsvp(updated);
+    },
   };
 }
