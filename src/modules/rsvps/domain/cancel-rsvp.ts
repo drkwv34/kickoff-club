@@ -5,6 +5,7 @@ import {
   loadMatchForRsvpMember,
 } from "./access";
 import { RSVP_NOT_FOUND_MESSAGE } from "./messages";
+import { fillOpenSpotsFromWaitlist } from "./promote-waitlist";
 import type { RsvpsDeps } from "./ports";
 import { toPublicRsvp, type PublicRsvp } from "./types";
 
@@ -32,6 +33,7 @@ export async function cancelMyRsvp(
     }
 
     const wasWaitlisted = existing.status === "waitlisted";
+    const wasGoing = existing.status === "going";
     const saved = await stores.rsvps.save({
       id: existing.id,
       matchId,
@@ -43,6 +45,9 @@ export async function cancelMyRsvp(
     });
 
     if (wasWaitlisted) {
+      await stores.rsvps.compactWaitlist(matchId);
+    } else if (wasGoing) {
+      await fillOpenSpotsFromWaitlist(matchId, locked.capacity, stores, now);
       await stores.rsvps.compactWaitlist(matchId);
     }
 

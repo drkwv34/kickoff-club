@@ -226,7 +226,7 @@ describe("RSVP HTTP integration", () => {
     expect(row?.count).toBe(2);
   });
 
-  it("does not auto-promote waitlist when a going player cancels", async () => {
+  it("promotes earliest waitlisted when a going player cancels", async () => {
     const { matchId, members } = await setupGroupWithMembers(2, 3);
 
     await setRsvp(
@@ -275,8 +275,64 @@ describe("RSVP HTTP integration", () => {
       goingCount: number;
       viewerRsvp: { status: string };
     };
-    expect(payload.goingCount).toBe(1);
-    expect(payload.viewerRsvp.status).toBe("waitlisted");
+    expect(payload.goingCount).toBe(2);
+    expect(payload.viewerRsvp.status).toBe("going");
+  });
+
+  it("parallel going cancels promote two waitlisted without exceeding capacity", async () => {
+    const { matchId, members } = await setupGroupWithMembers(2, 4);
+
+    for (let i = 0; i < 4; i++) {
+      const res = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(members[i]),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(res.status).toBe(200);
+    }
+
+    const [cancelA, cancelB] = await Promise.all([
+      cancelRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps/me`,
+          undefined,
+          authHeaders(members[0]),
+          "DELETE",
+        ),
+        { params: Promise.resolve({ matchId }) },
+      ),
+      cancelRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps/me`,
+          undefined,
+          authHeaders(members[1]),
+          "DELETE",
+        ),
+        { params: Promise.resolve({ matchId }) },
+      ),
+    ]);
+    expect(cancelA.status).toBe(200);
+    expect(cancelB.status).toBe(200);
+
+    const sql = await getTestSql();
+    const [counts] = await sql<{ going: number; waitlisted: number }[]>`
+      select
+        count(*) filter (where status = 'going')::int as going,
+        count(*) filter (where status = 'waitlisted')::int as waitlisted
+      from rsvps
+      where match_id = ${matchId}
+    `;
+    expect(counts?.going).toBe(2);
+    expect(counts?.waitlisted).toBe(0);
+
+    const promoted = await sql<{ user_id: string; status: string }[]>`
+      select user_id, status from rsvps
+      where match_id = ${matchId} and user_id in (${members[2].userId}, ${members[3].userId})
+    `;
+    expect(promoted.every((row) => row.status === "going")).toBe(true);
   });
 
   it("rejects RSVP from non-member", async () => {

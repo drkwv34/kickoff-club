@@ -20,6 +20,11 @@ export type RsvpRepository = {
   nextWaitlistPosition(matchId: string): Promise<number>;
   save(input: RsvpWriteInput & { id?: string; createdAt?: Date }): Promise<RsvpRecord>;
   compactWaitlist(matchId: string): Promise<void>;
+  /** FIFO head of waitlist → going; null if empty. */
+  promoteEarliestWaitlisted(
+    matchId: string,
+    updatedAt: Date,
+  ): Promise<RsvpRecord | null>;
 };
 
 export type RsvpStores = {
