@@ -37,6 +37,10 @@ export type MembershipRepository = {
     role: MembershipRole,
   ): Promise<MembershipRecord>;
   delete(groupId: string, userId: string): Promise<void>;
+  incrementNoShowCount(
+    groupId: string,
+    userId: string,
+  ): Promise<MembershipRecord>;
 };
 
 export type InviteRepository = {

@@ -33,6 +33,8 @@ describe("core drizzle schema", () => {
       "match_series",
       "matches",
       "rsvps",
+      "notifications",
+      "no_shows",
     ]);
   });
 });

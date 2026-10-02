@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { rsvps } from "@/lib/db/schema";
 import { mapUnknownError } from "@/lib/errors/domain-error";
@@ -132,6 +132,22 @@ export function createRsvpRepository(db: Db): RsvpRepository {
         throw new Error("promote waitlist update returned no row");
       }
       return toRsvp(updated);
+    },
+
+    async listUserIdsByMatchWithStatuses(matchId, statuses) {
+      if (statuses.length === 0) {
+        return [];
+      }
+      const rows = await db
+        .select({ userId: rsvps.userId })
+        .from(rsvps)
+        .where(
+          and(
+            eq(rsvps.matchId, matchId),
+            inArray(rsvps.status, statuses),
+          ),
+        );
+      return rows.map((row) => row.userId);
     },
   };
 }

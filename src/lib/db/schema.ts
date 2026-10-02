@@ -308,6 +308,83 @@ export const rsvpsRelations = relations(rsvps, ({ one }) => ({
   }),
 }));
 
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "invite_received",
+  "rsvp_confirmed",
+  "waitlist_promoted",
+  "match_cancelled",
+  "no_show_marked",
+]);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    payloadJson: jsonb("payload_json").notNull(),
+    readAt: timestamp("read_at", { withTimezone: true, mode: "date" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("notifications_user_id_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const noShows = pgTable(
+  "no_shows",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    markedBy: uuid("marked_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    markedAt: timestamp("marked_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("no_shows_match_id_user_id_unique").on(
+      table.matchId,
+      table.userId,
+    ),
+  ],
+);
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+export const noShowsRelations = relations(noShows, ({ one }) => ({
+  match: one(matches, {
+    fields: [noShows.matchId],
+    references: [matches.id],
+  }),
+  user: one(users, {
+    fields: [noShows.userId],
+    references: [users.id],
+  }),
+  marker: one(users, {
+    fields: [noShows.markedBy],
+    references: [users.id],
+  }),
+}));
+
 /** Table names CI/verify scripts assert after migrate. */
 export const CORE_TABLES = [
   "users",
@@ -318,4 +395,6 @@ export const CORE_TABLES = [
   "match_series",
   "matches",
   "rsvps",
+  "notifications",
+  "no_shows",
 ] as const;

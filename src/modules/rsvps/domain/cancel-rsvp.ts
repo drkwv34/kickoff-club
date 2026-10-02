@@ -13,10 +13,10 @@ export async function cancelMyRsvp(
   actorId: string,
   matchId: string,
   deps: RsvpsDeps,
-): Promise<{ rsvp: PublicRsvp }> {
+): Promise<{ rsvp: PublicRsvp; promotedUserIds: string[] }> {
   await loadMatchForRsvpMember(matchId, actorId, deps);
 
-  const result = await deps.runInTransaction(async (stores) => {
+  const { saved, promotedUserIds } = await deps.runInTransaction(async (stores) => {
     const locked = await stores.matches.findByIdForUpdate(matchId);
     if (!locked) {
       throw new DomainError(DomainErrorCode.NOT_FOUND, MATCH_NOT_FOUND_MESSAGE);
@@ -29,11 +29,12 @@ export async function cancelMyRsvp(
       throw new DomainError(DomainErrorCode.NOT_FOUND, RSVP_NOT_FOUND_MESSAGE);
     }
     if (existing.status === "cancelled") {
-      return existing;
+      return { saved: existing, promotedUserIds: [] as string[] };
     }
 
     const wasWaitlisted = existing.status === "waitlisted";
     const wasGoing = existing.status === "going";
+    let promotedUserIds: string[] = [];
     const saved = await stores.rsvps.save({
       id: existing.id,
       matchId,
@@ -47,12 +48,17 @@ export async function cancelMyRsvp(
     if (wasWaitlisted) {
       await stores.rsvps.compactWaitlist(matchId);
     } else if (wasGoing) {
-      await fillOpenSpotsFromWaitlist(matchId, locked.capacity, stores, now);
+      promotedUserIds = await fillOpenSpotsFromWaitlist(
+        matchId,
+        locked.capacity,
+        stores,
+        now,
+      );
       await stores.rsvps.compactWaitlist(matchId);
     }
 
-    return saved;
+    return { saved, promotedUserIds };
   });
 
-  return { rsvp: toPublicRsvp(result) };
+  return { rsvp: toPublicRsvp(saved), promotedUserIds };
 }

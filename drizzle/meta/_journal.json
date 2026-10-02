@@ -36,6 +36,13 @@
       "when": 1790692800000,
       "tag": "20261001120000_create_rsvps",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790779200000,
+      "tag": "20261002120000_create_notifications_noshows",
+      "breakpoints": true
     }
   ]
 }

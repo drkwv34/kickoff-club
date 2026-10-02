@@ -180,6 +180,22 @@ export function createMembershipRepository(db: Db): MembershipRepository {
           ),
         );
     },
+    async incrementNoShowCount(groupId, userId) {
+      const [row] = await db
+        .update(groupMemberships)
+        .set({ noShowCount: sql`${groupMemberships.noShowCount} + 1` })
+        .where(
+          and(
+            eq(groupMemberships.groupId, groupId),
+            eq(groupMemberships.userId, userId),
+          ),
+        )
+        .returning();
+      if (!row) {
+        throw new DomainError(DomainErrorCode.NOT_FOUND, "Member not found");
+      }
+      return toMembership(row);
+    },
   };
 }
 

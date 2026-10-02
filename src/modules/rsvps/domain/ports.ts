@@ -25,6 +25,10 @@ export type RsvpRepository = {
     matchId: string,
     updatedAt: Date,
   ): Promise<RsvpRecord | null>;
+  listUserIdsByMatchWithStatuses(
+    matchId: string,
+    statuses: RsvpStatus[],
+  ): Promise<string[]>;
 };
 
 export type RsvpStores = {
