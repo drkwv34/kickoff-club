@@ -11,11 +11,12 @@ export async function fillOpenSpotsFromWaitlist(
   capacity: number,
   stores: RsvpStores,
   now: Date,
-): Promise<void> {
+): Promise<string[]> {
+  const promotedUserIds: string[] = [];
   for (;;) {
     const goingCount = await stores.rsvps.countGoing(matchId);
     if (goingCount >= capacity) {
-      return;
+      return promotedUserIds;
     }
 
     const promoted = await stores.rsvps.promoteEarliestWaitlisted(
@@ -23,8 +24,9 @@ export async function fillOpenSpotsFromWaitlist(
       now,
     );
     if (!promoted) {
-      return;
+      return promotedUserIds;
     }
+    promotedUserIds.push(promoted.userId);
 
     const afterCount = await stores.rsvps.countGoing(matchId);
     if (afterCount > capacity) {

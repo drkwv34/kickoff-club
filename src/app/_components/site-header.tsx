@@ -1,8 +1,15 @@
 import Link from "next/link";
 import type { PublicUser } from "@/modules/auth/domain/user";
 import { LogoutButton } from "./logout-button";
+import { NotificationsNav } from "./notifications-nav";
 
-export function SiteHeader({ user }: { user: PublicUser | null }) {
+export function SiteHeader({
+  user,
+  unreadNotifications = 0,
+}: {
+  user: PublicUser | null;
+  unreadNotifications?: number;
+}) {
   return (
     <header className="site-header">
       <div className="site-header-inner">
@@ -12,6 +19,8 @@ export function SiteHeader({ user }: { user: PublicUser | null }) {
         <nav className="nav" aria-label="Primary">
           {user ? (
             <>
+              <Link href="/app">Dashboard</Link>
+              <NotificationsNav unreadCount={unreadNotifications} />
               <span className="nav-user">{user.displayName}</span>
               <LogoutButton />
             </>

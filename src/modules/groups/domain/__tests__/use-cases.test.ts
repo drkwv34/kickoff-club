@@ -106,6 +106,16 @@ function memoryDeps(start = new Date("2026-03-01T12:00:00.000Z")): GroupsDeps & 
       );
       if (idx >= 0) memberStore.splice(idx, 1);
     },
+    async incrementNoShowCount(groupId, userId) {
+      const row = memberStore.find(
+        (m) => m.groupId === groupId && m.userId === userId,
+      );
+      if (!row) {
+        throw new DomainError(DomainErrorCode.NOT_FOUND, "Member not found");
+      }
+      row.noShowCount += 1;
+      return row;
+    },
   };
 
   const invites: InviteRepository = {

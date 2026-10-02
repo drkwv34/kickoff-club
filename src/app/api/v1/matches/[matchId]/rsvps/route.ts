@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/http/auth-cookies";
 import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
+import { handleRsvpNotificationSideEffects } from "@/modules/notifications/domain/rsvp-side-effects";
 import { getRsvpsDeps, setRsvp } from "@/modules/rsvps";
 import {
   setRsvpBodySchema,
@@ -35,11 +36,18 @@ export async function POST(
       getRsvpsDeps(),
     );
 
+    await handleRsvpNotificationSideEffects({
+      matchId,
+      actorId: session.user.id,
+      promotedUserIds: result.promotedUserIds,
+      rsvpConfirmed: result.rsvpConfirmed,
+    });
+
     logger.info("rsvp set", {
       userId: session.user.id,
       matchId,
       status: parsed.data.status,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({ rsvp: result.rsvp });
   });
 }

@@ -1,5 +1,6 @@
 import type { GroupRepository, MembershipRepository } from "@/modules/groups/domain/ports";
 import type { Sport } from "@/modules/groups/domain/types";
+import type { RsvpRepository } from "@/modules/rsvps/domain/ports";
 import type { SeriesRecord, WeeklyRecurrenceRule } from "./series-types";
 import type { MatchRecord, MatchStatus } from "./types";
 
@@ -67,11 +68,34 @@ export type MatchStores = {
   series: SeriesRepository;
 };
 
+export type NoShowRecord = {
+  id: string;
+  matchId: string;
+  userId: string;
+  markedBy: string;
+  markedAt: Date;
+};
+
+export type NoShowRepository = {
+  findByMatchAndUser(
+    matchId: string,
+    userId: string,
+  ): Promise<NoShowRecord | null>;
+  create(input: {
+    matchId: string;
+    userId: string;
+    markedBy: string;
+    markedAt: Date;
+  }): Promise<NoShowRecord>;
+};
+
 export type MatchesDeps = {
   matches: MatchRepository;
   series: SeriesRepository;
   groups: GroupRepository;
   memberships: MembershipRepository;
+  rsvps: RsvpRepository;
+  noShows: NoShowRepository;
   clock: () => Date;
   runInTransaction: <T>(work: (stores: MatchStores) => Promise<T>) => Promise<T>;
 };

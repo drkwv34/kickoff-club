@@ -30,10 +30,15 @@ async function resolveGoingStatus(
 export async function setRsvp(
   input: SetRsvpInput,
   deps: RsvpsDeps,
-): Promise<{ rsvp: PublicRsvp }> {
+): Promise<{
+  rsvp: PublicRsvp;
+  promotedUserIds: string[];
+  rsvpConfirmed: boolean;
+}> {
   await loadMatchForRsvpMember(input.matchId, input.actorId, deps);
 
-  const result = await deps.runInTransaction(async (stores) => {
+  const { saved, promotedUserIds, rsvpConfirmed } = await deps.runInTransaction(
+    async (stores) => {
     const locked = await stores.matches.findByIdForUpdate(input.matchId);
     if (!locked) {
       throw new DomainError(DomainErrorCode.NOT_FOUND, MATCH_NOT_FOUND_MESSAGE);
@@ -46,9 +51,15 @@ export async function setRsvp(
       input.actorId,
     );
 
+    let promotedUserIds: string[] = [];
+
     if (input.status === "declined") {
       if (existing?.status === "declined") {
-        return existing;
+        return {
+          saved: existing,
+          promotedUserIds: [],
+          rsvpConfirmed: false,
+        };
       }
       const wasWaitlisted = existing?.status === "waitlisted";
       const wasGoing = existing?.status === "going";
@@ -64,7 +75,7 @@ export async function setRsvp(
       if (wasWaitlisted) {
         await stores.rsvps.compactWaitlist(input.matchId);
       } else if (wasGoing) {
-        await fillOpenSpotsFromWaitlist(
+        promotedUserIds = await fillOpenSpotsFromWaitlist(
           input.matchId,
           locked.capacity,
           stores,
@@ -72,16 +83,24 @@ export async function setRsvp(
         );
         await stores.rsvps.compactWaitlist(input.matchId);
       }
-      return saved;
+      return { saved, promotedUserIds, rsvpConfirmed: false };
     }
 
     if (existing?.status === "going") {
-      return existing;
+      return {
+        saved: existing,
+        promotedUserIds: [],
+        rsvpConfirmed: false,
+      };
     }
     if (existing?.status === "waitlisted") {
       const goingCount = await stores.rsvps.countGoing(input.matchId);
       if (goingCount >= locked.capacity) {
-        return existing;
+        return {
+          saved: existing,
+          promotedUserIds: [],
+          rsvpConfirmed: false,
+        };
       }
     }
 
@@ -106,8 +125,15 @@ export async function setRsvp(
       await stores.rsvps.compactWaitlist(input.matchId);
     }
 
-    return saved;
-  });
+    const rsvpConfirmed = status === "going";
 
-  return { rsvp: toPublicRsvp(result) };
+    return { saved, promotedUserIds, rsvpConfirmed };
+    },
+  );
+
+  return {
+    rsvp: toPublicRsvp(saved),
+    promotedUserIds,
+    rsvpConfirmed,
+  };
 }

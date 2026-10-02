@@ -128,3 +128,9 @@ export const createSeriesBodySchema = z.object({
 });
 
 export type CreateSeriesBody = z.infer<typeof createSeriesBodySchema>;
+
+export const markNoShowBodySchema = z.object({
+  userId: z.string().uuid("userId must be a valid UUID"),
+});
+
+export type MarkNoShowBody = z.infer<typeof markNoShowBodySchema>;

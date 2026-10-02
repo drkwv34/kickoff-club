@@ -1,7 +1,9 @@
 import { getDb } from "@/lib/db/client";
 import { createGroupStores } from "@/modules/groups/infra/group-repos";
+import { createRsvpRepository } from "@/modules/rsvps/infra/rsvp-repos";
 import type { MatchesDeps, MatchStores } from "./domain/ports";
 import { createMatchRepository } from "./infra/match-repos";
+import { createNoShowRepository } from "./infra/no-show-repos";
 import { createSeriesRepository } from "./infra/series-repos";
 
 let cached: MatchesDeps | null = null;
@@ -22,6 +24,8 @@ export function getMatchesDeps(): MatchesDeps {
       ...matchStores,
       groups: stores.groups,
       memberships: stores.memberships,
+      rsvps: createRsvpRepository(db),
+      noShows: createNoShowRepository(db),
       clock: () => new Date(),
       runInTransaction: async (work) => {
         return db.transaction(async (tx) => {
