@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PublicNotification } from "@/modules/notifications";
+import { EmptyState } from "./empty-state";
 import { useCsrfToken } from "./use-csrf-token";
 
 type Props = {
@@ -74,7 +75,12 @@ export function NotificationsList({
         </button>
       </div>
       {items.length === 0 ? (
-        <p>No notifications yet.</p>
+        <EmptyState title="No notifications yet">
+          <p>
+            You will see invites, RSVP updates, and match changes here as they
+            happen.
+          </p>
+        </EmptyState>
       ) : (
         <ul className="notifications-list">
           {items.map((item) => (

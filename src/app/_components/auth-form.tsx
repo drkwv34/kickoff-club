@@ -15,6 +15,11 @@ type ApiErrorBody = {
   fields?: Record<string, string>;
 };
 
+function fieldDescribedBy(...ids: (string | false | undefined)[]): string | undefined {
+  const value = ids.filter(Boolean).join(" ");
+  return value || undefined;
+}
+
 export function AuthForm({ mode }: { mode: Mode }) {
   const csrf = useCsrfToken();
   const searchParams = useSearchParams();
@@ -88,9 +93,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
           autoComplete="email"
           required
           disabled={pending}
+          aria-describedby={fieldDescribedBy(
+            fieldErrors.email && "email-error",
+          )}
+          aria-invalid={fieldErrors.email ? true : undefined}
         />
         {fieldErrors.email ? (
-          <p className="field-error">{fieldErrors.email}</p>
+          <p id="email-error" className="field-error" role="alert">
+            {fieldErrors.email}
+          </p>
         ) : null}
       </div>
 
@@ -105,9 +116,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
             required
             maxLength={80}
             disabled={pending}
+            aria-describedby={fieldDescribedBy(
+              fieldErrors.displayName && "displayName-error",
+            )}
+            aria-invalid={fieldErrors.displayName ? true : undefined}
           />
           {fieldErrors.displayName ? (
-            <p className="field-error">{fieldErrors.displayName}</p>
+            <p id="displayName-error" className="field-error" role="alert">
+              {fieldErrors.displayName}
+            </p>
           ) : null}
         </div>
       ) : null}
@@ -122,12 +139,21 @@ export function AuthForm({ mode }: { mode: Mode }) {
           required
           minLength={isRegister ? 12 : undefined}
           disabled={pending}
+          aria-describedby={fieldDescribedBy(
+            isRegister && "password-hint",
+            fieldErrors.password && "password-error",
+          )}
+          aria-invalid={fieldErrors.password ? true : undefined}
         />
         {isRegister ? (
-          <p className="field-hint">At least 12 characters.</p>
+          <p id="password-hint" className="field-hint">
+            At least 12 characters.
+          </p>
         ) : null}
         {fieldErrors.password ? (
-          <p className="field-error">{fieldErrors.password}</p>
+          <p id="password-error" className="field-error" role="alert">
+            {fieldErrors.password}
+          </p>
         ) : null}
       </div>
 
@@ -138,18 +164,24 @@ export function AuthForm({ mode }: { mode: Mode }) {
             id="timezone"
             name="timezone"
             type="text"
-            list="timezone-options"
+            list="auth-timezone-options"
             defaultValue="America/Bogota"
             required
             disabled={pending}
+            aria-describedby={fieldDescribedBy(
+              fieldErrors.timezone && "timezone-error",
+            )}
+            aria-invalid={fieldErrors.timezone ? true : undefined}
           />
-          <datalist id="timezone-options">
+          <datalist id="auth-timezone-options">
             {COMMON_TIMEZONES.map((zone) => (
               <option key={zone} value={zone} />
             ))}
           </datalist>
           {fieldErrors.timezone ? (
-            <p className="field-error">{fieldErrors.timezone}</p>
+            <p id="timezone-error" className="field-error" role="alert">
+              {fieldErrors.timezone}
+            </p>
           ) : null}
         </div>
       ) : null}

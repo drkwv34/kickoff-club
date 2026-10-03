@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CreateGroupForm } from "../_components/create-group-form";
+import { EmptyState } from "../_components/empty-state";
 import { JoinInviteForm } from "../_components/join-invite-form";
 import { getServerSession } from "@/lib/http/server-session";
 import { getGroupsDeps } from "@/modules/groups/composition";
@@ -23,25 +24,36 @@ export default async function AppHomePage() {
       </p>
 
       {groups.length === 0 ? (
-        <p className="empty">
-          You’re not in any groups yet. Create one below or join with an invite
-          code.
-        </p>
+        <EmptyState title="No groups yet">
+          <p>
+            Create a group for your regular pickup crew, or join an existing
+            one with an invite code from an organizer.
+          </p>
+        </EmptyState>
       ) : (
-        <ul className="group-list">
-          {groups.map((item) => (
-            <li key={item.group.id} className="group-card">
-              <Link href={`/app/groups/${item.group.id}`}>
-                {item.group.name}
-              </Link>
-              <span className="role-badge">{item.role}</span>
-            </li>
-          ))}
-        </ul>
+        <section aria-labelledby="your-groups-heading">
+          <h2 id="your-groups-heading" className="section-heading">
+            Groups you belong to
+          </h2>
+          <ul className="group-list">
+            {groups.map((item) => (
+              <li key={item.group.id} className="group-card">
+                <Link href={`/app/groups/${item.group.id}`}>
+                  {item.group.name}
+                </Link>
+                <span className="role-badge">{item.role}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <JoinInviteForm />
-      <CreateGroupForm />
+      <section aria-labelledby="join-group-heading">
+        <JoinInviteForm />
+      </section>
+      <section aria-labelledby="create-group-heading">
+        <CreateGroupForm />
+      </section>
     </main>
   );
 }

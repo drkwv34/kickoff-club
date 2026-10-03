@@ -68,7 +68,11 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
             max={50}
             defaultValue={50}
             disabled={pending || !csrf}
+            aria-describedby="maxUses-hint"
           />
+          <p id="maxUses-hint" className="field-hint">
+            How many players can use this invite link before it stops working.
+          </p>
         </div>
         <button type="submit" className="btn" disabled={pending || !csrf}>
           {pending ? "Creating…" : "Create invite link"}

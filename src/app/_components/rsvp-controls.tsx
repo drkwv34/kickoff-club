@@ -101,7 +101,7 @@ export function RsvpControls({
       : null;
 
   return (
-    <section className="rsvp-panel" aria-labelledby="rsvp-heading">
+    <section className="rsvp-panel panel" aria-labelledby="rsvp-heading">
       <h2 id="rsvp-heading">Your RSVP</h2>
       <p className="rsvp-capacity">
         {goingCount} / {capacity} spots filled

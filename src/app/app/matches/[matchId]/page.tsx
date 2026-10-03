@@ -65,7 +65,7 @@ export default async function MatchDetailPage({
 
     return (
       <main className="shell">
-        <p>
+        <p className="breadcrumb">
           <Link href={`/app/groups/${match.groupId}`}>
             ← {groupDetail.group.name}
           </Link>

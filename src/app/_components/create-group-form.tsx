@@ -72,7 +72,7 @@ export function CreateGroupForm() {
 
   return (
     <form className="auth-form" onSubmit={(e) => void onSubmit(e)} noValidate>
-      <h2>Create a group</h2>
+      <h2 id="create-group-heading">Create a group</h2>
       {error ? (
         <p className="form-error" role="alert">
           {error}
@@ -88,9 +88,15 @@ export function CreateGroupForm() {
           required
           maxLength={80}
           disabled={pending}
+          aria-describedby={
+            fieldErrors.name ? "name-error" : undefined
+          }
+          aria-invalid={fieldErrors.name ? true : undefined}
         />
         {fieldErrors.name ? (
-          <p className="field-error">{fieldErrors.name}</p>
+          <p id="name-error" className="field-error" role="alert">
+            {fieldErrors.name}
+          </p>
         ) : null}
       </div>
 
@@ -102,6 +108,10 @@ export function CreateGroupForm() {
           required
           disabled={pending}
           defaultValue="futbol"
+          aria-describedby={
+            fieldErrors.sportDefault ? "sportDefault-error" : undefined
+          }
+          aria-invalid={fieldErrors.sportDefault ? true : undefined}
         >
           {SPORTS.map((sport) => (
             <option key={sport} value={sport}>
@@ -110,7 +120,9 @@ export function CreateGroupForm() {
           ))}
         </select>
         {fieldErrors.sportDefault ? (
-          <p className="field-error">{fieldErrors.sportDefault}</p>
+          <p id="sportDefault-error" className="field-error" role="alert">
+            {fieldErrors.sportDefault}
+          </p>
         ) : null}
       </div>
 
@@ -120,18 +132,24 @@ export function CreateGroupForm() {
           id="homeTimezone"
           name="homeTimezone"
           type="text"
-          list="timezone-options"
+          list="create-group-timezone-options"
           defaultValue="America/Bogota"
           required
           disabled={pending}
+          aria-describedby={
+            fieldErrors.homeTimezone ? "homeTimezone-error" : undefined
+          }
+          aria-invalid={fieldErrors.homeTimezone ? true : undefined}
         />
-        <datalist id="timezone-options">
+        <datalist id="create-group-timezone-options">
           {COMMON_TIMEZONES.map((zone) => (
             <option key={zone} value={zone} />
           ))}
         </datalist>
         {fieldErrors.homeTimezone ? (
-          <p className="field-error">{fieldErrors.homeTimezone}</p>
+          <p id="homeTimezone-error" className="field-error" role="alert">
+            {fieldErrors.homeTimezone}
+          </p>
         ) : null}
       </div>
 
@@ -143,9 +161,15 @@ export function CreateGroupForm() {
           rows={3}
           maxLength={500}
           disabled={pending}
+          aria-describedby={
+            fieldErrors.description ? "description-error" : undefined
+          }
+          aria-invalid={fieldErrors.description ? true : undefined}
         />
         {fieldErrors.description ? (
-          <p className="field-error">{fieldErrors.description}</p>
+          <p id="description-error" className="field-error" role="alert">
+            {fieldErrors.description}
+          </p>
         ) : null}
       </div>
 

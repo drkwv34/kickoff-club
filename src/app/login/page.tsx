@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AuthForm } from "../_components/auth-form";
@@ -16,7 +17,10 @@ export default async function LoginPage({
   return (
     <main className="shell">
       <h1>Sign in</h1>
-      <p className="lede">Welcome back. Use the email you registered with.</p>
+      <p className="lede">
+        Welcome back. Use the email you registered with.{" "}
+        <Link href="/">Back to home</Link>
+      </p>
       <Suspense>
         <AuthForm mode="login" />
       </Suspense>
