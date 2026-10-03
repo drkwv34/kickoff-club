@@ -14,19 +14,27 @@ export function JoinInviteForm() {
 
   return (
     <form className="join-form" onSubmit={onSubmit}>
-      <label htmlFor="inviteCode">Have an invite code?</label>
-      <div className="join-row">
-        <input
-          id="inviteCode"
-          name="inviteCode"
-          type="text"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          autoComplete="off"
-        />
-        <button type="submit" className="btn" disabled={!code.trim()}>
-          Continue
-        </button>
+      <h2 id="join-group-heading">Join with invite</h2>
+      <div className="field">
+        <label htmlFor="inviteCode">Invite code</label>
+        <div className="join-row">
+          <input
+            id="inviteCode"
+            name="inviteCode"
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            autoComplete="off"
+            aria-describedby="inviteCode-hint"
+          />
+          <button type="submit" className="btn" disabled={!code.trim()}>
+            Continue
+          </button>
+        </div>
+        <p id="inviteCode-hint" className="field-hint">
+          Paste the code from your organizer — you will confirm on the next
+          screen.
+        </p>
       </div>
     </form>
   );

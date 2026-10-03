@@ -112,9 +112,20 @@ export function CreateMatchForm({
 
       <div className="field">
         <label htmlFor="title">Title</label>
-        <input id="title" name="title" type="text" required maxLength={120} disabled={pending} />
+        <input
+          id="title"
+          name="title"
+          type="text"
+          required
+          maxLength={120}
+          disabled={pending}
+          aria-describedby={fieldErrors.title ? "match-title-error" : undefined}
+          aria-invalid={fieldErrors.title ? true : undefined}
+        />
         {fieldErrors.title ? (
-          <p className="field-error">{fieldErrors.title}</p>
+          <p id="match-title-error" className="field-error" role="alert">
+            {fieldErrors.title}
+          </p>
         ) : null}
       </div>
 
@@ -137,17 +148,38 @@ export function CreateMatchForm({
 
       <div className="field">
         <label htmlFor="venue">Venue</label>
-        <input id="venue" name="venue" type="text" required maxLength={200} disabled={pending} />
+        <input
+          id="venue"
+          name="venue"
+          type="text"
+          required
+          maxLength={200}
+          disabled={pending}
+          aria-describedby={fieldErrors.venue ? "match-venue-error" : undefined}
+          aria-invalid={fieldErrors.venue ? true : undefined}
+        />
         {fieldErrors.venue ? (
-          <p className="field-error">{fieldErrors.venue}</p>
+          <p id="match-venue-error" className="field-error" role="alert">
+            {fieldErrors.venue}
+          </p>
         ) : null}
       </div>
 
       <div className="field">
         <label htmlFor="date">Date (match timezone)</label>
-        <input id="date" name="date" type="date" required disabled={pending} />
+        <input
+          id="date"
+          name="date"
+          type="date"
+          required
+          disabled={pending}
+          aria-describedby={fieldErrors.startAt ? "match-date-error" : undefined}
+          aria-invalid={fieldErrors.startAt ? true : undefined}
+        />
         {fieldErrors.startAt ? (
-          <p className="field-error">{fieldErrors.startAt}</p>
+          <p id="match-date-error" className="field-error" role="alert">
+            {fieldErrors.startAt}
+          </p>
         ) : null}
       </div>
 
@@ -181,6 +213,10 @@ export function CreateMatchForm({
           defaultValue={defaultTimezone}
           required
           disabled={pending}
+          aria-describedby={
+            fieldErrors.timezone ? "match-timezone-error" : undefined
+          }
+          aria-invalid={fieldErrors.timezone ? true : undefined}
         />
         <datalist id="match-timezone-options">
           {COMMON_TIMEZONES.map((zone) => (
@@ -188,7 +224,9 @@ export function CreateMatchForm({
           ))}
         </datalist>
         {fieldErrors.timezone ? (
-          <p className="field-error">{fieldErrors.timezone}</p>
+          <p id="match-timezone-error" className="field-error" role="alert">
+            {fieldErrors.timezone}
+          </p>
         ) : null}
       </div>
 
@@ -203,9 +241,15 @@ export function CreateMatchForm({
           defaultValue={10}
           required
           disabled={pending}
+          aria-describedby={
+            fieldErrors.capacity ? "match-capacity-error" : undefined
+          }
+          aria-invalid={fieldErrors.capacity ? true : undefined}
         />
         {fieldErrors.capacity ? (
-          <p className="field-error">{fieldErrors.capacity}</p>
+          <p id="match-capacity-error" className="field-error" role="alert">
+            {fieldErrors.capacity}
+          </p>
         ) : null}
       </div>
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AuthForm } from "../_components/auth-form";
@@ -17,7 +18,8 @@ export default async function RegisterPage({
     <main className="shell">
       <h1>Create an account</h1>
       <p className="lede">
-        Register with email and a password of at least 12 characters.
+        Register with email and a password of at least 12 characters.{" "}
+        <Link href="/">Back to home</Link>
       </p>
       <Suspense>
         <AuthForm mode="register" />
