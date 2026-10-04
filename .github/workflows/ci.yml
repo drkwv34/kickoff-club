@@ -65,5 +65,14 @@ jobs:
       - name: Unit and integration tests
         run: pnpm test
 
+      - name: Build
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Playwright e2e
+        run: pnpm test:e2e
+
       - name: OpenSpec validate
         run: pnpm openspec:validate
