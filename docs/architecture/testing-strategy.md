@@ -20,9 +20,9 @@ Current pipeline:
 2. `pnpm typecheck`
 3. `pnpm db:migrate` against a Postgres 16 service container
 4. `pnpm db:verify` (core tables present)
-5. `pnpm test` (Vitest unit + auth/groups integration against the same Postgres)
-
-Future gates (SRS §7): `next build`, Playwright with Compose.
+5. `pnpm test` (Vitest unit + integration against the same Postgres)
+6. `pnpm build`
+7. `pnpm test:e2e` (Playwright Chromium; `webServer` runs `pnpm start` in CI)
 
 ## What to test hard
 
@@ -34,4 +34,4 @@ CSS pixels, every empty-state variant, load tests in CI (manual k6 optional).
 
 ## Playwright
 
-Config stub only on Day 1 — no feature specs until UI flows exist.
+Specs live in `e2e/` (see `e2e/README.md`). Critical-path coverage: register, group + invite, match RSVP, waitlist promotion, organizer no-show. Prefer role/label selectors; CI uses one worker and at most one retry per test.
