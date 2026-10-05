@@ -1,94 +1,163 @@
 # kickoff-club
 
-Pickup-sports match organizer (RSVPs, waitlists, timezone-aware schedules, organizer tools). Product features land via OpenSpec-approved changes.
+**kickoff-club helps local pickup groups schedule matches, collect RSVPs with waitlists, and give organizers timezone-aware tools without spreadsheets.**
 
-## Status
+## Why it exists
 
-Day 4: **groups, invites, RBAC**. Create a group (you become organizer), invite by code/link, join as player. Demoting the last organizer returns 409 `LAST_ORGANIZER`. Matches/RSVP are still later OpenSpec changes.
+Pickup sports groups juggle chat threads, unclear headcounts, and last-minute dropouts. kickoff-club models the real domain: **groups** with organizer/player roles, **invites**, **matches** (one-off and recurring series), **RSVPs** with capacity and waitlist promotion, **notifications**, and **no-show** tracking. The codebase is a teaching-grade full stack app (SRS §9): strict layering, OpenSpec change control, Dockerized Postgres, and CI that runs unit, integration, and Playwright tests.
 
-## Stack
+## Demo
 
-TypeScript · Next.js App Router · PostgreSQL 16 · **Drizzle ORM** · Docker Compose · Vitest · Playwright
-
-**Package manager:** [pnpm](https://pnpm.io/) — lockfile committed; use `pnpm install`.
-
-**ORM choice:** Drizzle (typed schema + forward-only SQL under `drizzle/`). Documented in [`docs/architecture/persistence.md`](docs/architecture/persistence.md).
-
-## Quick start (local)
+### Docker Compose + seed
 
 ```bash
 cp .env.example .env
-docker compose config   # validate compose file
+docker compose up --build
+# In another terminal once the app is healthy:
+docker compose exec app pnpm db:seed
+```
+
+One-liner (migrations + seed without starting the long-running app):
+
+```bash
+docker compose up -d db mailpit && docker compose run --rm migrate && docker compose run --rm --no-deps app pnpm db:seed
+```
+
+### Demo sign-in
+
+After seeding, open http://localhost:3000/login and use:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Organizer | `organizer@demo.kickoff.local` | `DemoKickoff12!` |
+| Player | `player@demo.kickoff.local` | `DemoKickoff12!` |
+
+Then visit `/app`, open the **Saturday Pickup (Demo)** group, and view the upcoming **Demo kickaround** match.
+
+Mailpit (captured email): http://localhost:8025
+
+## Stack (and why)
+
+| Piece | Role |
+|-------|------|
+| **TypeScript** | End-to-end typing from Drizzle schema to UI |
+| **Next.js 15 App Router** | UI in `src/app/`; **REST JSON at `/api/v1` via Route Handlers** so HTTP stays thin and domain logic stays in `src/modules/*/domain/` (no separate API process to deploy for this learning scope) |
+| **PostgreSQL 16** | Relational source of truth for groups, matches, RSVPs, sessions |
+| **Drizzle ORM** | Typed schema + forward-only SQL in `drizzle/` |
+| **Docker Compose** | Postgres, Mailpit, migrate job, and app for one-command review |
+| **Vitest** | Unit + HTTP integration tests against real Postgres |
+| **Playwright** | Browser critical path in CI (`e2e/`) |
+| **GitHub Actions** | `quality` job: lint → typecheck → migrate → seed ×2 → test → build → e2e → OpenSpec validate |
+| **OpenSpec** (`@fission-ai/openspec`) | Proposal gate for non-trivial features (`openspec/`) |
+
+Package manager: **pnpm** (lockfile committed).
+
+## How to run
+
+```bash
+cp .env.example .env
 docker compose up --build
 ```
 
-`docker compose up` starts Postgres, **applies migrations** (`migrate` service), then the app.
+Compose starts Postgres, runs **migrations** (`migrate` service), Mailpit, then the Next.js app on http://localhost:3000.
 
-App: http://localhost:3000 · Mailpit UI: http://localhost:8025
-
-### Groups
-
-1. Sign in, open http://localhost:3000/app
-2. Create a group (you are organizer).
-3. Generate an invite link and open it as a second user (or paste the code).
-4. The invitee joins as **player**. Demoting the last organizer via `PATCH /api/v1/groups/:id/members/:userId` returns 409 `LAST_ORGANIZER`.
-
-1. Open http://localhost:3000/register
-2. Create an account (password ≥ 12 characters, IANA timezone e.g. `America/Bogota`)
-3. You land on `/app`. Sign out from the header.
-4. Sign in again at `/login`.
-5. After logout, `GET /api/v1/me` with the old `kickoff_session` cookie returns 401.
-
-### Session policy
-
-- Cookie `kickoff_session`: **HttpOnly**, **SameSite=Lax**, **Secure** in production, `Path=/`.
-- Idle TTL **14 days** (slides on authenticated API use); absolute TTL **30 days** from session creation.
-- Logout sets `sessions.revoked_at` (server-side revoke).
-- Mutating `/api/v1` routes require CSRF: cookie `kickoff_csrf` + header `X-CSRF-Token` (double-submit). Missing/mismatch → 403.
-
-### Migrate without Compose app
-
-Postgres must be reachable at `DATABASE_URL` (Compose `db` service or local install):
+### Local app without Compose (Postgres still required)
 
 ```bash
-pnpm db:migrate    # apply drizzle/ SQL
-pnpm db:verify     # assert core tables exist
-```
-
-Against Compose Postgres only:
-
-```bash
-docker compose up -d db
+docker compose up -d db mailpit
 docker compose run --rm migrate
+pnpm install
+pnpm dev
+pnpm db:seed   # optional demo data
 ```
 
-## Hard edges (waitlist promotion)
+### Database commands
 
-When a `going` RSVP is cancelled or declined, promotion runs in the **same database transaction** as the spot opening: the match row is locked with `SELECT … FOR UPDATE`, the RSVP is updated, then the earliest waitlisted row (by `waitlist_position`, then `created_at`) is promoted until `going_count` reaches `capacity` or the waitlist is empty. Concurrent cancels on the same match serialize on the match lock so `going_count` cannot exceed capacity. See [`docs/architecture/transactionality.md`](docs/architecture/transactionality.md).
-
-## Documentation
-
-| Path | Purpose |
-|------|---------|
-| [`openspec/`](openspec/) | Capabilities and change proposals (OpenSpec gate) |
-| [`docs/architecture/`](docs/architecture/) | Layering, errors, transactions, persistence, testing |
-| [`.cursor/rules/`](.cursor/rules/) | Cursor agent rules derived from SRS §8 |
+```bash
+pnpm db:migrate   # apply drizzle/ SQL
+pnpm db:verify    # assert core tables exist
+pnpm db:seed      # idempotent demo group, users, upcoming match
+```
 
 ## Tests & CI
+
+[![CI](https://github.com/drkwv34/kickoff-club/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/drkwv34/kickoff-club/actions/workflows/ci.yml)
 
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm db:migrate  # required before integration tests
-pnpm test        # Vitest unit + auth integration (needs Postgres)
+pnpm db:migrate
+pnpm test           # Vitest (needs Postgres)
+pnpm build
+pnpm test:e2e       # Playwright (see e2e/README.md)
 ```
 
-GitHub Actions runs lint → typecheck → migrate → schema verify → test on pull requests and `main`.
+Pull requests and `main` run the **`quality`** workflow in `.github/workflows/ci.yml`.
+
+## Architecture sketch
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  UI — React / App Router (src/app/)                      │
+└───────────────────────────┬─────────────────────────────┘
+                            │ fetch / server components
+┌───────────────────────────▼─────────────────────────────┐
+│  API — Route handlers (src/app/api/v1/)                    │
+└───────────────────────────┬─────────────────────────────┘
+                            │ use-cases
+┌───────────────────────────▼─────────────────────────────┐
+│  Domain — src/modules/{auth,groups,matches,rsvps,...}/domain │
+└───────────────────────────┬─────────────────────────────┘
+                            │ ports
+┌───────────────────────────▼─────────────────────────────┐
+│  Infra — Drizzle repos, SMTP (src/lib/db, */infra/)        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+```mermaid
+flowchart TB
+  subgraph ui [UI]
+    Pages[src/app pages]
+  end
+  subgraph api [API]
+    Routes["/api/v1 route handlers"]
+  end
+  subgraph domain [Domain]
+    UC[use-cases and policies]
+  end
+  subgraph infra [Infra]
+    DB[(PostgreSQL)]
+    SMTP[Mailpit / SMTP]
+  end
+  Pages --> Routes
+  Routes --> UC
+  UC --> DB
+  UC --> SMTP
+```
+
+Deeper docs: [`docs/architecture/`](docs/architecture/) · OpenSpec: [`openspec/`](openspec/)
+
+## Hard edges
+
+- **Authz** — Group **organizer** vs **player** roles; demoting or removing the **last organizer** returns `409 LAST_ORGANIZER`. Match management checks membership + role in domain policies.
+- **Waitlist races** — Cancelling a `going` RSVP promotes the earliest waitlisted row in the **same transaction** as the cancel, with `SELECT … FOR UPDATE` on the match so `going_count` cannot exceed capacity under concurrency. See [`docs/architecture/transactionality.md`](docs/architecture/transactionality.md).
+- **Timezones** — Users register with an IANA timezone; groups have `home_timezone`; matches store `start_at`/`end_at` as UTC instants plus a display timezone. UI helpers format wall-clock times for viewers (see `src/modules/matches/domain/time-display.ts`).
+- **Sessions & CSRF** — HttpOnly session cookie; mutating `/api/v1` routes require double-submit CSRF (`kickoff_csrf` cookie + `X-CSRF-Token`).
+
+## Trade-offs / what I'd do differently
+
+- **Monolith Next.js** — Route Handlers keep the repo small for a case study; at higher scale I'd split a dedicated API service and keep Next for UI only.
+- **Postgres-only** — No read replicas or event bus; notifications use in-app rows and SMTP adapter with retries documented under `docs/architecture/external-integrations.md`.
+- **Email** — Mailpit locally; production would need real SMTP secrets, bounce handling, and outbox hardening (schema supports notification flows; full deliverability ops are out of scope).
+- **Seed** — Fixed demo IDs and emails for idempotency; a richer seed might add RSVPs and invite links, but that would duplicate Playwright coverage.
+
+## Repository metadata
+
+If GitHub **About** cannot be updated via API, use:
+
+- **Description:** Pickup-sports match organizer: RSVPs, waitlists, timezone-aware schedules, and organizer tools for local groups.
+- **Topics:** `typescript`, `nextjs`, `postgresql`, `docker`, `github-actions`, `playwright`, `fullstack`, `rbac`, `saas`
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
----
-
-_Full case-study README sections (problem → demo → hard edges) will be completed before pin-ready closeout per SRS §9._
