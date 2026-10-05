@@ -62,6 +62,9 @@ jobs:
       - name: Verify schema
         run: pnpm db:verify
 
+      - name: Demo seed (idempotent)
+        run: pnpm db:seed && pnpm db:seed
+
       - name: Unit and integration tests
         run: pnpm test
 
