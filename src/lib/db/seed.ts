@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { loadEnv, resetEnvCache } from "../config/env";
+import { closeDb } from "./client";
 import { runDemoSeed } from "./seed-demo";
 
 async function main(): Promise<void> {
@@ -8,6 +9,7 @@ async function main(): Promise<void> {
   loadEnv();
 
   const summary = await runDemoSeed();
+  await closeDb();
 
   console.log(
     JSON.stringify({
