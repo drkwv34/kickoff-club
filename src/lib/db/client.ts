@@ -31,3 +31,12 @@ export async function pingDatabase(): Promise<void> {
   const sql = getSql();
   await sql`select 1`;
 }
+
+/** Close the shared pool (CLI scripts should call before exit). */
+export async function closeDb(): Promise<void> {
+  if (globalForDb.kickoffSql) {
+    await globalForDb.kickoffSql.end();
+    globalForDb.kickoffSql = undefined;
+    globalForDb.kickoffDb = undefined;
+  }
+}
