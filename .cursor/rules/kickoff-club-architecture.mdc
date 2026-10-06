@@ -29,6 +29,8 @@ Read `docs/architecture/README.md` and linked docs before feature work.
 
 Error handling, transactionality, domain modeling, logging/redaction, design patterns, testing (unit/integration/e2e + CI), external integrations (SMTP retries/timeouts), frontend a11y/states — all defined under `docs/architecture/`. Follow them.
 
-## Day 4 scope
+## Current pin (v0.1.0)
 
-Groups, invites, and last-organizer RBAC. No match creation, waitlist, or real invite email.
+Must-scope shipped: auth sessions, groups/invites/last-organizer RBAC, one-off and weekly series matches, RSVP capacity + waitlist promotion, notifications/no-shows, Playwright e2e, README + demo seed.
+
+Do **not** implement Should-scope items (password reset, match list pagination, this-and-future series cancel, notification preferences, unmark no-show) unless a new OpenSpec change proposes them. See `openspec/backlog/should-scope.md`.
