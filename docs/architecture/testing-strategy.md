@@ -14,15 +14,17 @@ Tests **colocated** as `*.test.ts` next to source **or** under `__tests__/` with
 
 ## CI (GitHub Actions)
 
-Current pipeline:
+The `quality` job in `.github/workflows/ci.yml` currently:
 
 1. `pnpm lint`
 2. `pnpm typecheck`
 3. `pnpm db:migrate` against a Postgres 16 service container
 4. `pnpm db:verify` (core tables present)
-5. `pnpm test` (Vitest unit + integration against the same Postgres)
-6. `pnpm build`
-7. `pnpm test:e2e` (Playwright Chromium; `webServer` runs `pnpm start` in CI)
+5. `pnpm db:seed` twice (idempotent demo dataset)
+6. `pnpm test` (Vitest unit + integration against the same Postgres)
+7. `pnpm build`
+8. `pnpm test:e2e` (Playwright Chromium; `webServer` runs `pnpm start` in CI)
+9. `pnpm openspec:validate`
 
 ## What to test hard
 
