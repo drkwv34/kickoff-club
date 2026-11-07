@@ -13,6 +13,7 @@ import {
   PATCH as patchMatch,
 } from "@/app/api/v1/matches/[matchId]/route";
 import { POST as cancelMatch } from "@/app/api/v1/matches/[matchId]/cancel/route";
+import { POST as setRsvp } from "@/app/api/v1/matches/[matchId]/rsvps/route";
 import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/http/cookies";
 import { ensureTestSchema, resetAuthTables } from "@/lib/db/test-helpers";
 import { DomainErrorCode } from "@/lib/errors/domain-error";
@@ -263,5 +264,100 @@ describe("matches HTTP integration", () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe(DomainErrorCode.VALIDATION_ERROR);
+  });
+
+  it("rejects capacity below going RSVP count and allows equal capacity", async () => {
+    const organizer = await registerSession("cap-org@example.com", "Organizer");
+    const playerA = await registerSession("cap-a@example.com", "Player A");
+    const playerB = await registerSession("cap-b@example.com", "Player B");
+
+    const groupRes = await createGroup(
+      jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+    );
+    const { group } = (await groupRes.json()) as { group: { id: string } };
+
+    for (const member of [playerA, playerB]) {
+      const inviteRes = await createInvite(
+        jsonRequest(
+          `/api/v1/groups/${group.id}/invites`,
+          {},
+          authHeaders(organizer),
+        ),
+        { params: Promise.resolve({ groupId: group.id }) },
+      );
+      const { invite } = (await inviteRes.json()) as { invite: { code: string } };
+      await acceptInvite(
+        jsonRequest(
+          `/api/v1/invites/${invite.code}/accept`,
+          {},
+          authHeaders(member),
+        ),
+        { params: Promise.resolve({ code: invite.code }) },
+      );
+    }
+
+    const createRes = await createMatch(
+      jsonRequest(
+        `/api/v1/groups/${group.id}/matches`,
+        { ...matchBody, capacity: 3 },
+        authHeaders(organizer),
+      ),
+      { params: Promise.resolve({ groupId: group.id }) },
+    );
+    expect(createRes.status).toBe(201);
+    const created = (await createRes.json()) as { match: { id: string } };
+    const matchId = created.match.id;
+
+    for (const member of [playerA, playerB]) {
+      const rsvpRes = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(member),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(rsvpRes.status).toBe(200);
+    }
+
+    const tooLow = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { capacity: 1 },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(tooLow.status).toBe(409);
+    const tooLowBody = (await tooLow.json()) as { code: string };
+    expect(tooLowBody.code).toBe(DomainErrorCode.CAPACITY_BELOW_RSVPS);
+
+    const afterReject = await getMatch(
+      new Request(`${ORIGIN}/api/v1/matches/${matchId}`, {
+        headers: { cookie: organizer.cookieHeader },
+      }),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(afterReject.status).toBe(200);
+    const afterRejectBody = (await afterReject.json()) as {
+      match: { capacity: number };
+    };
+    expect(afterRejectBody.match.capacity).toBe(3);
+
+    const equalGoing = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { capacity: 2 },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(equalGoing.status).toBe(200);
+    const equalBody = (await equalGoing.json()) as {
+      match: { capacity: number };
+    };
+    expect(equalBody.match.capacity).toBe(2);
   });
 });

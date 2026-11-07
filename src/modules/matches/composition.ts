@@ -12,6 +12,7 @@ function createMatchStores(db: ReturnType<typeof getDb>): MatchStores {
   return {
     matches: createMatchRepository(db),
     series: createSeriesRepository(db),
+    rsvps: createRsvpRepository(db),
   };
 }
 
@@ -24,7 +25,6 @@ export function getMatchesDeps(): MatchesDeps {
       ...matchStores,
       groups: stores.groups,
       memberships: stores.memberships,
-      rsvps: createRsvpRepository(db),
       noShows: createNoShowRepository(db),
       clock: () => new Date(),
       runInTransaction: async (work) => {

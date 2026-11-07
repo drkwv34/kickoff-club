@@ -53,7 +53,8 @@ function buildDeps(overrides: Partial<MatchesDeps> = {}): MatchesDeps {
       create: vi.fn(),
     },
     clock: () => new Date("2020-01-02T12:00:00Z"),
-    runInTransaction: async (work) => work({ matches: base.matches, series: base.series }),
+    runInTransaction: async (work) =>
+      work({ matches: base.matches, series: base.series, rsvps: base.rsvps }),
   };
   base.matches.findById = vi.fn(async () => ({
     id: matchId,

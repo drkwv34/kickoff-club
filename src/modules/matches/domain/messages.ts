@@ -2,6 +2,8 @@ export const MATCH_NOT_FOUND_MESSAGE = "Match not found";
 export const MATCH_ALREADY_STARTED_MESSAGE =
   "Cannot edit a match that has already started";
 export const MATCH_CANCELLED_MESSAGE = "Match is cancelled";
+export const CAPACITY_BELOW_RSVPS_MESSAGE =
+  "Capacity cannot be lower than the number of going RSVPs";
 export const INVALID_SCHEDULE_MESSAGE = "End time must be after start time";
 export const SERIES_NOT_FOUND_MESSAGE = "Series not found";
 export const RECURRENCE_TOO_MANY_INSTANCES_MESSAGE =

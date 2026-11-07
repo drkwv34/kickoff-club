@@ -2,8 +2,10 @@ import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
 import type { Sport } from "@/modules/groups/domain/types";
 import { loadMatchForOrganizer } from "./access";
 import {
+  CAPACITY_BELOW_RSVPS_MESSAGE,
   MATCH_ALREADY_STARTED_MESSAGE,
   MATCH_CANCELLED_MESSAGE,
+  MATCH_NOT_FOUND_MESSAGE,
 } from "./messages";
 import type { MatchesDeps } from "./ports";
 import { assertEndAfterStart } from "./schedule";
@@ -45,7 +47,7 @@ export async function updateMatch(
   const endAt = input.endAt ?? match.endAt;
   assertEndAfterStart(startAt, endAt);
 
-  const updated = await deps.matches.update(match.id, {
+  const patch = {
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.sport !== undefined ? { sport: input.sport } : {}),
     ...(input.venue !== undefined ? { venue: input.venue } : {}),
@@ -57,6 +59,38 @@ export async function updateMatch(
       ? { description: input.description }
       : {}),
     updatedAt: now,
+  };
+
+  const nextCapacity = input.capacity;
+  if (nextCapacity === undefined) {
+    const updated = await deps.matches.update(match.id, patch);
+    return { match: toPublicMatch(updated) };
+  }
+
+  const updated = await deps.runInTransaction(async (stores) => {
+    const locked = await stores.matches.findByIdForUpdate(match.id);
+    if (!locked) {
+      throw new DomainError(DomainErrorCode.NOT_FOUND, MATCH_NOT_FOUND_MESSAGE);
+    }
+    if (locked.status === "cancelled") {
+      throw new DomainError(DomainErrorCode.CONFLICT, MATCH_CANCELLED_MESSAGE);
+    }
+    if (locked.startAt.getTime() <= now.getTime()) {
+      throw new DomainError(
+        DomainErrorCode.CONFLICT,
+        MATCH_ALREADY_STARTED_MESSAGE,
+      );
+    }
+
+    const goingCount = await stores.rsvps.countGoing(locked.id);
+    if (nextCapacity < goingCount) {
+      throw new DomainError(
+        DomainErrorCode.CAPACITY_BELOW_RSVPS,
+        CAPACITY_BELOW_RSVPS_MESSAGE,
+      );
+    }
+
+    return stores.matches.update(locked.id, patch);
   });
 
   return { match: toPublicMatch(updated) };
