@@ -360,4 +360,58 @@ describe("matches HTTP integration", () => {
     };
     expect(equalBody.match.capacity).toBe(2);
   });
+
+  it("preserves omitted description on partial edit and clears empty description", async () => {
+    const organizer = await registerSession("desc-org@example.com", "Organizer");
+    const groupRes = await createGroup(
+      jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+    );
+    const { group } = (await groupRes.json()) as { group: { id: string } };
+
+    const createRes = await createMatch(
+      jsonRequest(
+        `/api/v1/groups/${group.id}/matches`,
+        { ...matchBody, description: "Bring bibs" },
+        authHeaders(organizer),
+      ),
+      { params: Promise.resolve({ groupId: group.id }) },
+    );
+    expect(createRes.status).toBe(201);
+    const created = (await createRes.json()) as {
+      match: { id: string; description: string | null; venue: string };
+    };
+    expect(created.match.description).toBe("Bring bibs");
+    const matchId = created.match.id;
+
+    const venueOnly = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { venue: "Cancha Norte" },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(venueOnly.status).toBe(200);
+    const venuePatched = (await venueOnly.json()) as {
+      match: { description: string | null; venue: string };
+    };
+    expect(venuePatched.match.venue).toBe("Cancha Norte");
+    expect(venuePatched.match.description).toBe("Bring bibs");
+
+    const clearDesc = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { description: "" },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(clearDesc.status).toBe(200);
+    const cleared = (await clearDesc.json()) as {
+      match: { description: string | null };
+    };
+    expect(cleared.match.description).toBeNull();
+  });
 });

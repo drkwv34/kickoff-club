@@ -58,6 +58,17 @@ const matchFields = {
     .transform((value) => (value && value.length > 0 ? value : null)),
 };
 
+const updateDescription = z
+  .string()
+  .trim()
+  .max(2000, "Description is too long")
+  .nullish()
+  .transform((value) => {
+    if (value === undefined) return undefined;
+    if (value === null || value.length === 0) return null;
+    return value;
+  });
+
 export const createMatchBodySchema = z.object({
   ...matchFields,
   timezone: matchFields.timezone.optional(),
@@ -72,7 +83,12 @@ export const updateMatchBodySchema = z
     endAt: matchFields.endAt.optional(),
     timezone: matchFields.timezone.optional(),
     capacity: matchFields.capacity.optional(),
-    description: matchFields.description,
+    description: updateDescription,
+  })
+  .transform((body) => {
+    if (body.description !== undefined) return body;
+    const { description: _omitted, ...rest } = body;
+    return rest;
   })
   .refine(
     (body) =>
