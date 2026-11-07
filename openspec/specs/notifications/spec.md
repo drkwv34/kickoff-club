@@ -30,12 +30,17 @@ Authenticated users SHALL list notifications via `GET /api/v1/notifications` and
 
 ### Requirement: Supported event types
 
-The system SHALL create in-app notifications for at minimum: invite received, RSVP confirmed, waitlist promoted, match cancelled, and no-show marked (to the affected player).
+The system SHALL create in-app notifications for at minimum: invite received, RSVP confirmed, waitlist promoted, match cancelled, no-show marked (to the affected player), and match updated (to going and waitlisted members when start, end, or venue changes).
 
 #### Scenario: Waitlist promoted
 
 - **WHEN** a waitlisted member is promoted to `going`
 - **THEN** that member receives a `waitlist_promoted` notification
+
+#### Scenario: Match schedule updated
+
+- **WHEN** a going or waitlisted member is notified of a start, end, or venue change
+- **THEN** that member receives a `match_updated` notification
 
 ### Requirement: Email adapter
 
@@ -45,3 +50,12 @@ The system SHALL send email through a `NotificationMailer` port. Local developme
 
 - **WHEN** a user is promoted from the waitlist and SMTP is configured
 - **THEN** an email is attempted to the user’s registered address and may appear in Mailpit
+
+### Requirement: Match updated event type
+
+The system SHALL persist and email a `match_updated` notification when a match start, end, or venue change is published for a recipient. Payload MUST include `matchId` and `matchTitle`. Email send failures MUST NOT roll back the in-app row.
+
+#### Scenario: In-app row for schedule change
+
+- **WHEN** a `match_updated` event is published for a user
+- **THEN** a notification row exists for that user with type `match_updated` and a payload that includes `matchId`
