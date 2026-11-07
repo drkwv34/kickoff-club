@@ -13,7 +13,14 @@ import {
   PATCH as patchMatch,
 } from "@/app/api/v1/matches/[matchId]/route";
 import { POST as cancelMatch } from "@/app/api/v1/matches/[matchId]/cancel/route";
+import { POST as setRsvp } from "@/app/api/v1/matches/[matchId]/rsvps/route";
+import { GET as listNotifications } from "@/app/api/v1/notifications/route";
 import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/http/cookies";
+import { setNotificationsMailerForTests } from "@/modules/notifications";
+import {
+  createRecordingNotificationMailer,
+  type RecordedNotificationMail,
+} from "@/modules/notifications/infra/smtp-mailer";
 import { ensureTestSchema, resetAuthTables } from "@/lib/db/test-helpers";
 import { DomainErrorCode } from "@/lib/errors/domain-error";
 import { formatWallClock } from "@/modules/matches/domain/time-display";
@@ -263,5 +270,290 @@ describe("matches HTTP integration", () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe(DomainErrorCode.VALIDATION_ERROR);
+  });
+
+  it("rejects capacity below going RSVP count and allows equal capacity", async () => {
+    const organizer = await registerSession("cap-org@example.com", "Organizer");
+    const playerA = await registerSession("cap-a@example.com", "Player A");
+    const playerB = await registerSession("cap-b@example.com", "Player B");
+
+    const groupRes = await createGroup(
+      jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+    );
+    const { group } = (await groupRes.json()) as { group: { id: string } };
+
+    for (const member of [playerA, playerB]) {
+      const inviteRes = await createInvite(
+        jsonRequest(
+          `/api/v1/groups/${group.id}/invites`,
+          {},
+          authHeaders(organizer),
+        ),
+        { params: Promise.resolve({ groupId: group.id }) },
+      );
+      const { invite } = (await inviteRes.json()) as { invite: { code: string } };
+      await acceptInvite(
+        jsonRequest(
+          `/api/v1/invites/${invite.code}/accept`,
+          {},
+          authHeaders(member),
+        ),
+        { params: Promise.resolve({ code: invite.code }) },
+      );
+    }
+
+    const createRes = await createMatch(
+      jsonRequest(
+        `/api/v1/groups/${group.id}/matches`,
+        { ...matchBody, capacity: 3 },
+        authHeaders(organizer),
+      ),
+      { params: Promise.resolve({ groupId: group.id }) },
+    );
+    expect(createRes.status).toBe(201);
+    const created = (await createRes.json()) as { match: { id: string } };
+    const matchId = created.match.id;
+
+    for (const member of [playerA, playerB]) {
+      const rsvpRes = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(member),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(rsvpRes.status).toBe(200);
+    }
+
+    const tooLow = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { capacity: 1 },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(tooLow.status).toBe(409);
+    const tooLowBody = (await tooLow.json()) as { code: string };
+    expect(tooLowBody.code).toBe(DomainErrorCode.CAPACITY_BELOW_RSVPS);
+
+    const afterReject = await getMatch(
+      new Request(`${ORIGIN}/api/v1/matches/${matchId}`, {
+        headers: { cookie: organizer.cookieHeader },
+      }),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(afterReject.status).toBe(200);
+    const afterRejectBody = (await afterReject.json()) as {
+      match: { capacity: number };
+    };
+    expect(afterRejectBody.match.capacity).toBe(3);
+
+    const equalGoing = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { capacity: 2 },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(equalGoing.status).toBe(200);
+    const equalBody = (await equalGoing.json()) as {
+      match: { capacity: number };
+    };
+    expect(equalBody.match.capacity).toBe(2);
+  });
+
+  it("preserves omitted description on partial edit and clears empty description", async () => {
+    const organizer = await registerSession("desc-org@example.com", "Organizer");
+    const groupRes = await createGroup(
+      jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+    );
+    const { group } = (await groupRes.json()) as { group: { id: string } };
+
+    const createRes = await createMatch(
+      jsonRequest(
+        `/api/v1/groups/${group.id}/matches`,
+        { ...matchBody, description: "Bring bibs" },
+        authHeaders(organizer),
+      ),
+      { params: Promise.resolve({ groupId: group.id }) },
+    );
+    expect(createRes.status).toBe(201);
+    const created = (await createRes.json()) as {
+      match: { id: string; description: string | null; venue: string };
+    };
+    expect(created.match.description).toBe("Bring bibs");
+    const matchId = created.match.id;
+
+    const venueOnly = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { venue: "Cancha Norte" },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(venueOnly.status).toBe(200);
+    const venuePatched = (await venueOnly.json()) as {
+      match: { description: string | null; venue: string };
+    };
+    expect(venuePatched.match.venue).toBe("Cancha Norte");
+    expect(venuePatched.match.description).toBe("Bring bibs");
+
+    const clearDesc = await patchMatch(
+      jsonRequest(
+        `/api/v1/matches/${matchId}`,
+        { description: "" },
+        authHeaders(organizer),
+        "PATCH",
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    expect(clearDesc.status).toBe(200);
+    const cleared = (await clearDesc.json()) as {
+      match: { description: string | null };
+    };
+    expect(cleared.match.description).toBeNull();
+  });
+
+  it("notifies going and waitlisted members when start time changes, not on description-only edit", async () => {
+    const sent: RecordedNotificationMail[] = [];
+    setNotificationsMailerForTests(createRecordingNotificationMailer(sent));
+
+    try {
+      const organizer = await registerSession(
+        "sched-org@example.com",
+        "Organizer",
+      );
+      const going = await registerSession("sched-going@example.com", "Going");
+      const waitlisted = await registerSession(
+        "sched-wait@example.com",
+        "Waitlisted",
+      );
+
+      const groupRes = await createGroup(
+        jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+      );
+      const { group } = (await groupRes.json()) as { group: { id: string } };
+
+      for (const member of [going, waitlisted]) {
+        const inviteRes = await createInvite(
+          jsonRequest(
+            `/api/v1/groups/${group.id}/invites`,
+            {},
+            authHeaders(organizer),
+          ),
+          { params: Promise.resolve({ groupId: group.id }) },
+        );
+        const { invite } = (await inviteRes.json()) as {
+          invite: { code: string };
+        };
+        await acceptInvite(
+          jsonRequest(
+            `/api/v1/invites/${invite.code}/accept`,
+            {},
+            authHeaders(member),
+          ),
+          { params: Promise.resolve({ code: invite.code }) },
+        );
+      }
+
+      const createRes = await createMatch(
+        jsonRequest(
+          `/api/v1/groups/${group.id}/matches`,
+          { ...matchBody, capacity: 1 },
+          authHeaders(organizer),
+        ),
+        { params: Promise.resolve({ groupId: group.id }) },
+      );
+      expect(createRes.status).toBe(201);
+      const created = (await createRes.json()) as { match: { id: string } };
+      const matchId = created.match.id;
+
+      const goingRsvp = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(going),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(goingRsvp.status).toBe(200);
+      const waitRsvp = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(waitlisted),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(waitRsvp.status).toBe(200);
+
+      const mailBeforeSchedule = sent.filter(
+        (message) => message.template === "match_updated",
+      ).length;
+
+      const startPatch = await patchMatch(
+        jsonRequest(
+          `/api/v1/matches/${matchId}`,
+          { startAt: "2027-07-16T01:00:00.000Z" },
+          authHeaders(organizer),
+          "PATCH",
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(startPatch.status).toBe(200);
+
+      async function matchUpdatedCount(
+        session: AuthSession,
+      ): Promise<number> {
+        const listRes = await listNotifications(
+          new Request(`${ORIGIN}/api/v1/notifications`, {
+            headers: { cookie: session.cookieHeader },
+          }),
+        );
+        expect(listRes.status).toBe(200);
+        const body = (await listRes.json()) as {
+          notifications: Array<{ type: string }>;
+        };
+        return body.notifications.filter((n) => n.type === "match_updated")
+          .length;
+      }
+
+      expect(await matchUpdatedCount(going)).toBe(1);
+      expect(await matchUpdatedCount(waitlisted)).toBe(1);
+      expect(await matchUpdatedCount(organizer)).toBe(0);
+
+      const scheduleMails = sent.filter(
+        (message) => message.template === "match_updated",
+      );
+      expect(scheduleMails).toHaveLength(mailBeforeSchedule + 2);
+      expect(scheduleMails.map((message) => message.to).sort()).toEqual(
+        ["sched-going@example.com", "sched-wait@example.com"].sort(),
+      );
+
+      const descPatch = await patchMatch(
+        jsonRequest(
+          `/api/v1/matches/${matchId}`,
+          { description: "Wear dark shirts" },
+          authHeaders(organizer),
+          "PATCH",
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(descPatch.status).toBe(200);
+      expect(await matchUpdatedCount(going)).toBe(1);
+      expect(await matchUpdatedCount(waitlisted)).toBe(1);
+      expect(
+        sent.filter((message) => message.template === "match_updated"),
+      ).toHaveLength(mailBeforeSchedule + 2);
+    } finally {
+      setNotificationsMailerForTests(null);
+    }
   });
 });

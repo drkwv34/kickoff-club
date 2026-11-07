@@ -15,6 +15,8 @@ function subjectFor(template: NotificationMailTemplate, payload: Record<string, 
       return `Invite to ${String(payload.groupName ?? "a group")}`;
     case "no_show_marked":
       return `No-show recorded for ${matchTitle}`;
+    case "match_updated":
+      return `Match updated: ${matchTitle}`;
     default:
       return "kickoff-club notification";
   }
@@ -33,6 +35,8 @@ function textBody(template: NotificationMailTemplate, payload: Record<string, un
       return `You joined ${String(payload.groupName ?? "a group")} on kickoff-club.`;
     case "no_show_marked":
       return `An organizer marked you as a no-show for ${matchTitle}.`;
+    case "match_updated":
+      return `The match ${matchTitle} was updated. Check the new time or venue.`;
     default:
       return JSON.stringify(payload);
   }
@@ -68,6 +72,27 @@ export function createNoopNotificationMailer(): NotificationMailer {
   return {
     async send() {
       /* no-op */
+    },
+  };
+}
+
+export type RecordedNotificationMail = {
+  template: string;
+  to: string;
+  payload: Record<string, unknown>;
+};
+
+/** Test double that records each send for assertions. */
+export function createRecordingNotificationMailer(
+  sent: RecordedNotificationMail[],
+): NotificationMailer {
+  return {
+    async send(input) {
+      sent.push({
+        template: input.template,
+        to: input.to,
+        payload: input.payload,
+      });
     },
   };
 }

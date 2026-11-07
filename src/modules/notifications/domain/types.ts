@@ -4,6 +4,7 @@ export const NOTIFICATION_TYPES = [
   "waitlist_promoted",
   "match_cancelled",
   "no_show_marked",
+  "match_updated",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

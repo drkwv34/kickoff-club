@@ -4,6 +4,8 @@ import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
 import { getMatchesDeps } from "@/modules/matches/composition";
 import { getMatchDetail } from "@/modules/matches/domain/get-match";
+import { getNotificationsDeps } from "@/modules/notifications";
+import { notifyMatchUpdated } from "@/modules/notifications/domain/match-events";
 import { getMatchRsvpSummary, getRsvpsDeps } from "@/modules/rsvps";
 import { updateMatch } from "@/modules/matches/domain/update-match";
 import { parseInstant } from "@/modules/matches/domain/schedule";
@@ -74,7 +76,25 @@ export async function PATCH(
       getMatchesDeps(),
     );
 
+    if (result.scheduleOrVenueChanged) {
+      const notifyDeps = getNotificationsDeps();
+      const recipientIds = await getRsvpsDeps().rsvps.listUserIdsByMatchWithStatuses(
+        matchId,
+        ["going", "waitlisted"],
+      );
+      const uniqueRecipients = [...new Set(recipientIds)];
+      for (const userId of uniqueRecipients) {
+        await notifyMatchUpdated(
+          userId,
+          result.match.id,
+          result.match.title,
+          result.match.groupId,
+          notifyDeps,
+        );
+      }
+    }
+
     logger.info("match updated", { userId: session.user.id, matchId });
-    return NextResponse.json(result);
+    return NextResponse.json({ match: result.match });
   });
 }

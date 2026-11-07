@@ -1,10 +1,18 @@
 import { getDb } from "@/lib/db/client";
 import { createUserRepository } from "@/modules/auth/infra/user-repo";
-import type { NotificationsDeps } from "./domain/ports";
+import type { NotificationMailer, NotificationsDeps } from "./domain/ports";
 import { createNotificationRepository } from "./infra/notification-repos";
 import { createSmtpNotificationMailer } from "./infra/smtp-mailer";
 
 let cached: NotificationsDeps | null = null;
+let mailerForTests: NotificationMailer | null = null;
+
+export function setNotificationsMailerForTests(
+  mailer: NotificationMailer | null,
+): void {
+  mailerForTests = mailer;
+  cached = null;
+}
 
 export function getNotificationsDeps(): NotificationsDeps {
   if (!cached) {
@@ -12,7 +20,7 @@ export function getNotificationsDeps(): NotificationsDeps {
     const users = createUserRepository(db);
     cached = {
       notifications: createNotificationRepository(db),
-      mailer: createSmtpNotificationMailer(),
+      mailer: mailerForTests ?? createSmtpNotificationMailer(),
       resolveUserEmail: async (userId) => {
         const user = await users.findById(userId);
         return user?.email ?? null;

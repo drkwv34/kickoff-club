@@ -66,6 +66,7 @@ export type MatchRepository = {
 export type MatchStores = {
   matches: MatchRepository;
   series: SeriesRepository;
+  rsvps: RsvpRepository;
 };
 
 export type NoShowRecord = {

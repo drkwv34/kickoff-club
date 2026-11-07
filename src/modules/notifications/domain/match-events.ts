@@ -65,6 +65,20 @@ export async function notifyInviteReceived(
   });
 }
 
+export async function notifyMatchUpdated(
+  userId: string,
+  matchId: string,
+  matchTitle: string,
+  groupId: string,
+  deps: NotificationsDeps,
+): Promise<void> {
+  await publishNotification(deps, {
+    userId,
+    type: "match_updated",
+    payload: { matchId, matchTitle, groupId },
+  });
+}
+
 export async function notifyNoShowMarked(
   userId: string,
   matchId: string,

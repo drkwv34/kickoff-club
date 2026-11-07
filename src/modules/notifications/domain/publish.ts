@@ -7,6 +7,7 @@ const MAIL_TEMPLATES: Record<NotificationType, NotificationMailTemplate> = {
   waitlist_promoted: "waitlist_promoted",
   match_cancelled: "match_cancelled",
   no_show_marked: "no_show_marked",
+  match_updated: "match_updated",
 };
 
 /**
