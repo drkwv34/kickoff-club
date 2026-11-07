@@ -85,11 +85,6 @@ export const updateMatchBodySchema = z
     capacity: matchFields.capacity.optional(),
     description: updateDescription,
   })
-  .transform((body) => {
-    if (body.description !== undefined) return body;
-    const { description: _omitted, ...rest } = body;
-    return rest;
-  })
   .refine(
     (body) =>
       body.title !== undefined ||

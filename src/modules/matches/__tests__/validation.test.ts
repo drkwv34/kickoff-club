@@ -8,7 +8,6 @@ describe("updateMatchBodySchema", () => {
     });
     expect(venueOnly.success).toBe(true);
     if (!venueOnly.success) return;
-    expect(venueOnly.data).not.toHaveProperty("description");
     expect(venueOnly.data.description).toBeUndefined();
 
     const empty = updateMatchBodySchema.safeParse({ description: "" });
