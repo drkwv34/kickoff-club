@@ -314,6 +314,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "waitlist_promoted",
   "match_cancelled",
   "no_show_marked",
+  "match_updated",
 ]);
 
 export const notifications = pgTable(

@@ -18,7 +18,8 @@ export type NotificationMailTemplate =
   | "rsvp_confirmed"
   | "waitlist_promoted"
   | "match_cancelled"
-  | "no_show_marked";
+  | "no_show_marked"
+  | "match_updated";
 
 export type NotificationMailer = {
   send(input: {

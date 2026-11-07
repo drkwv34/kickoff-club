@@ -9,7 +9,7 @@ import {
 } from "./messages";
 import type { MatchesDeps } from "./ports";
 import { assertEndAfterStart } from "./schedule";
-import { toPublicMatch, type PublicMatch } from "./types";
+import { toPublicMatch, type MatchRecord, type PublicMatch } from "./types";
 
 export type UpdateMatchInput = {
   actorId: string;
@@ -24,10 +24,37 @@ export type UpdateMatchInput = {
   description?: string | null;
 };
 
+export type UpdateMatchResult = {
+  match: PublicMatch;
+  scheduleOrVenueChanged: boolean;
+};
+
+function scheduleOrVenueChanged(
+  match: MatchRecord,
+  input: UpdateMatchInput,
+): boolean {
+  if (
+    input.startAt !== undefined &&
+    input.startAt.getTime() !== match.startAt.getTime()
+  ) {
+    return true;
+  }
+  if (
+    input.endAt !== undefined &&
+    input.endAt.getTime() !== match.endAt.getTime()
+  ) {
+    return true;
+  }
+  if (input.venue !== undefined && input.venue !== match.venue) {
+    return true;
+  }
+  return false;
+}
+
 export async function updateMatch(
   input: UpdateMatchInput,
   deps: MatchesDeps,
-): Promise<{ match: PublicMatch }> {
+): Promise<UpdateMatchResult> {
   const { match } = await loadMatchForOrganizer(
     input.matchId,
     input.actorId,
@@ -61,10 +88,14 @@ export async function updateMatch(
     updatedAt: now,
   };
 
+  const notifySchedule = scheduleOrVenueChanged(match, input);
   const nextCapacity = input.capacity;
   if (nextCapacity === undefined) {
     const updated = await deps.matches.update(match.id, patch);
-    return { match: toPublicMatch(updated) };
+    return {
+      match: toPublicMatch(updated),
+      scheduleOrVenueChanged: notifySchedule,
+    };
   }
 
   const updated = await deps.runInTransaction(async (stores) => {
@@ -93,5 +124,8 @@ export async function updateMatch(
     return stores.matches.update(locked.id, patch);
   });
 
-  return { match: toPublicMatch(updated) };
+  return {
+    match: toPublicMatch(updated),
+    scheduleOrVenueChanged: notifySchedule,
+  };
 }

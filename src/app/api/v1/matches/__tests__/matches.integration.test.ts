@@ -14,7 +14,13 @@ import {
 } from "@/app/api/v1/matches/[matchId]/route";
 import { POST as cancelMatch } from "@/app/api/v1/matches/[matchId]/cancel/route";
 import { POST as setRsvp } from "@/app/api/v1/matches/[matchId]/rsvps/route";
+import { GET as listNotifications } from "@/app/api/v1/notifications/route";
 import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/http/cookies";
+import { setNotificationsMailerForTests } from "@/modules/notifications";
+import {
+  createRecordingNotificationMailer,
+  type RecordedNotificationMail,
+} from "@/modules/notifications/infra/smtp-mailer";
 import { ensureTestSchema, resetAuthTables } from "@/lib/db/test-helpers";
 import { DomainErrorCode } from "@/lib/errors/domain-error";
 import { formatWallClock } from "@/modules/matches/domain/time-display";
@@ -413,5 +419,141 @@ describe("matches HTTP integration", () => {
       match: { description: string | null };
     };
     expect(cleared.match.description).toBeNull();
+  });
+
+  it("notifies going and waitlisted members when start time changes, not on description-only edit", async () => {
+    const sent: RecordedNotificationMail[] = [];
+    setNotificationsMailerForTests(createRecordingNotificationMailer(sent));
+
+    try {
+      const organizer = await registerSession(
+        "sched-org@example.com",
+        "Organizer",
+      );
+      const going = await registerSession("sched-going@example.com", "Going");
+      const waitlisted = await registerSession(
+        "sched-wait@example.com",
+        "Waitlisted",
+      );
+
+      const groupRes = await createGroup(
+        jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+      );
+      const { group } = (await groupRes.json()) as { group: { id: string } };
+
+      for (const member of [going, waitlisted]) {
+        const inviteRes = await createInvite(
+          jsonRequest(
+            `/api/v1/groups/${group.id}/invites`,
+            {},
+            authHeaders(organizer),
+          ),
+          { params: Promise.resolve({ groupId: group.id }) },
+        );
+        const { invite } = (await inviteRes.json()) as {
+          invite: { code: string };
+        };
+        await acceptInvite(
+          jsonRequest(
+            `/api/v1/invites/${invite.code}/accept`,
+            {},
+            authHeaders(member),
+          ),
+          { params: Promise.resolve({ code: invite.code }) },
+        );
+      }
+
+      const createRes = await createMatch(
+        jsonRequest(
+          `/api/v1/groups/${group.id}/matches`,
+          { ...matchBody, capacity: 1 },
+          authHeaders(organizer),
+        ),
+        { params: Promise.resolve({ groupId: group.id }) },
+      );
+      expect(createRes.status).toBe(201);
+      const created = (await createRes.json()) as { match: { id: string } };
+      const matchId = created.match.id;
+
+      const goingRsvp = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(going),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(goingRsvp.status).toBe(200);
+      const waitRsvp = await setRsvp(
+        jsonRequest(
+          `/api/v1/matches/${matchId}/rsvps`,
+          { status: "going" },
+          authHeaders(waitlisted),
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(waitRsvp.status).toBe(200);
+
+      const mailBeforeSchedule = sent.filter(
+        (message) => message.template === "match_updated",
+      ).length;
+
+      const startPatch = await patchMatch(
+        jsonRequest(
+          `/api/v1/matches/${matchId}`,
+          { startAt: "2027-07-16T01:00:00.000Z" },
+          authHeaders(organizer),
+          "PATCH",
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(startPatch.status).toBe(200);
+
+      async function matchUpdatedCount(
+        session: AuthSession,
+      ): Promise<number> {
+        const listRes = await listNotifications(
+          new Request(`${ORIGIN}/api/v1/notifications`, {
+            headers: { cookie: session.cookieHeader },
+          }),
+        );
+        expect(listRes.status).toBe(200);
+        const body = (await listRes.json()) as {
+          notifications: Array<{ type: string }>;
+        };
+        return body.notifications.filter((n) => n.type === "match_updated")
+          .length;
+      }
+
+      expect(await matchUpdatedCount(going)).toBe(1);
+      expect(await matchUpdatedCount(waitlisted)).toBe(1);
+      expect(await matchUpdatedCount(organizer)).toBe(0);
+
+      const scheduleMails = sent.filter(
+        (message) => message.template === "match_updated",
+      );
+      expect(scheduleMails).toHaveLength(mailBeforeSchedule + 2);
+      expect(scheduleMails.map((message) => message.to).sort()).toEqual(
+        ["sched-going@example.com", "sched-wait@example.com"].sort(),
+      );
+
+      const descPatch = await patchMatch(
+        jsonRequest(
+          `/api/v1/matches/${matchId}`,
+          { description: "Wear dark shirts" },
+          authHeaders(organizer),
+          "PATCH",
+        ),
+        { params: Promise.resolve({ matchId }) },
+      );
+      expect(descPatch.status).toBe(200);
+      expect(await matchUpdatedCount(going)).toBe(1);
+      expect(await matchUpdatedCount(waitlisted)).toBe(1);
+      expect(
+        sent.filter((message) => message.template === "match_updated"),
+      ).toHaveLength(mailBeforeSchedule + 2);
+    } finally {
+      setNotificationsMailerForTests(null);
+    }
   });
 });
