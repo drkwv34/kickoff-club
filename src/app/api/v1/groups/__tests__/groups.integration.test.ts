@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { POST as register } from "@/app/api/v1/auth/register/route";
 import { GET as csrf } from "@/app/api/v1/auth/csrf/route";
 import { GET as listGroups, POST as createGroup } from "@/app/api/v1/groups/route";
@@ -11,6 +11,11 @@ import { POST as acceptInvite } from "@/app/api/v1/invites/[code]/accept/route";
 import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/http/cookies";
 import { ensureTestSchema, getTestSql, resetAuthTables } from "@/lib/db/test-helpers";
 import { DomainErrorCode } from "@/lib/errors/domain-error";
+import { setNotificationsMailerForTests } from "@/modules/notifications";
+import {
+  createRecordingNotificationMailer,
+  type RecordedNotificationMail,
+} from "@/modules/notifications/infra/smtp-mailer";
 
 const ORIGIN = "http://localhost:3000";
 
@@ -108,6 +113,10 @@ describe("groups HTTP integration", () => {
 
   beforeEach(async () => {
     await resetAuthTables();
+  });
+
+  afterEach(() => {
+    setNotificationsMailerForTests(null);
   });
 
   afterAll(async () => {
@@ -345,5 +354,49 @@ describe("groups HTTP integration", () => {
     expect(body.groups).toHaveLength(1);
     expect(body.groups[0]?.role).toBe("organizer");
     expect(body.groups[0]?.group.name).toBe("Tuesday Futbol");
+  });
+
+  it("emails the invite code or accept link when create-invite includes an address", async () => {
+    const sent: RecordedNotificationMail[] = [];
+    setNotificationsMailerForTests(createRecordingNotificationMailer(sent));
+
+    const alice = await registerSession("alice@example.com", "Alice");
+    const created = await createGroup(
+      jsonRequest("/api/v1/groups", groupBody, authHeaders(alice)),
+    );
+    expect(created.status).toBe(201);
+    const { group } = (await created.json()) as { group: { id: string } };
+    const inviteEmail = "invitee@example.com";
+
+    const withEmail = await createInvite(
+      jsonRequest(
+        `/api/v1/groups/${group.id}/invites`,
+        { maxUses: 5, email: inviteEmail },
+        authHeaders(alice),
+      ),
+      { params: Promise.resolve({ groupId: group.id }) },
+    );
+    expect(withEmail.status).toBe(201);
+    const withEmailBody = (await withEmail.json()) as {
+      invite: { code: string; acceptPath: string };
+    };
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.to).toBe(inviteEmail);
+    const mailText = JSON.stringify(sent[0]);
+    expect(
+      mailText.includes(withEmailBody.invite.code) ||
+        mailText.includes(withEmailBody.invite.acceptPath),
+    ).toBe(true);
+
+    const withoutEmail = await createInvite(
+      jsonRequest(
+        `/api/v1/groups/${group.id}/invites`,
+        { maxUses: 5 },
+        authHeaders(alice),
+      ),
+      { params: Promise.resolve({ groupId: group.id }) },
+    );
+    expect(withoutEmail.status).toBe(201);
+    expect(sent).toHaveLength(1);
   });
 });

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { loadEnv } from "@/lib/config/env";
 import { requireSession } from "@/lib/http/auth-cookies";
 import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
 import { getGroupsDeps } from "@/modules/groups/composition";
 import { createInvite } from "@/modules/groups/domain/create-invite";
-import { stubInviteEmail } from "@/modules/groups/infra/invite-code";
+import { sendInviteEmail } from "@/modules/groups/infra/invite-code";
+import { getNotificationsDeps } from "@/modules/notifications";
 import {
   createInviteBodySchema,
   validationErrorFromZod,
@@ -43,11 +45,18 @@ export async function POST(
       );
 
       if (parsed.data.email) {
-        stubInviteEmail({
-          to: parsed.data.email,
-          code: invite.code,
-          groupName: groupId,
-        });
+        const group = await getGroupsDeps().groups.findById(groupId);
+        try {
+          await sendInviteEmail(getNotificationsDeps().mailer, {
+            to: parsed.data.email,
+            code: invite.code,
+            groupName: group?.name ?? "a group",
+            acceptPath: invite.acceptPath,
+            acceptUrl: `${loadEnv().APP_BASE_URL}${invite.acceptPath}`,
+          });
+        } catch {
+          // Email failure must not roll back the invite.
+        }
       }
 
       logger.info("invite created", {

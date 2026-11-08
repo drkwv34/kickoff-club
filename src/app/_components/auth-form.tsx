@@ -204,6 +204,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         ) : (
           <>
             New here? <Link href={`/register${nextQuery}`}>Register</Link>
+            {" · "}
+            <Link href="/forgot-password">Forgot password</Link>
           </>
         )}
       </p>

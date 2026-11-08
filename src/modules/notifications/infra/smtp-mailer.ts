@@ -17,6 +17,8 @@ function subjectFor(template: NotificationMailTemplate, payload: Record<string, 
       return `No-show recorded for ${matchTitle}`;
     case "match_updated":
       return `Match updated: ${matchTitle}`;
+    case "password_reset":
+      return "Reset your kickoff-club password";
     default:
       return "kickoff-club notification";
   }
@@ -31,12 +33,36 @@ function textBody(template: NotificationMailTemplate, payload: Record<string, un
       return `Your RSVP is confirmed for ${matchTitle}.`;
     case "match_cancelled":
       return `The match ${matchTitle} was cancelled.`;
-    case "invite_received":
-      return `You joined ${String(payload.groupName ?? "a group")} on kickoff-club.`;
+    case "invite_received": {
+      const groupName = String(payload.groupName ?? "a group");
+      const code = payload.code ? String(payload.code) : "";
+      const acceptUrl = payload.acceptUrl ? String(payload.acceptUrl) : "";
+      if (code || acceptUrl) {
+        return [
+          `You're invited to join ${groupName} on kickoff-club.`,
+          code ? `Invite code: ${code}` : null,
+          acceptUrl ? `Accept: ${acceptUrl}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n");
+      }
+      return `You joined ${groupName} on kickoff-club.`;
+    }
     case "no_show_marked":
       return `An organizer marked you as a no-show for ${matchTitle}.`;
     case "match_updated":
       return `The match ${matchTitle} was updated. Check the new time or venue.`;
+    case "password_reset": {
+      const resetUrl = payload.resetUrl ? String(payload.resetUrl) : "";
+      const token = payload.token ? String(payload.token) : "";
+      return [
+        "Use this link to choose a new password. It expires in one hour and can be used once.",
+        resetUrl ? `Reset: ${resetUrl}` : null,
+        token ? `Token: ${token}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
     default:
       return JSON.stringify(payload);
   }

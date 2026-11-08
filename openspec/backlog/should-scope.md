@@ -8,7 +8,6 @@ Sources: archived change proposals under `openspec/changes/archive/` and module 
 
 | ID / name | Summary | Recorded in |
 |-----------|---------|-------------|
-| FR-AUTH-004 | Password reset (email token flow). Auth is register/login/logout only. | `openspec/changes/archive/2026-09-26-auth-sessions/proposal.md` |
 | FR-MATCH-006 | Match list filters and pagination. List is ordered by `start_at` with no query filters. | `openspec/changes/archive/2026-09-29-matches-one-off/proposal.md` |
 | Series “this and future” cancel | Cancel one instance and entire series exist; cancel-this-and-future is out of v1. | `src/modules/matches/README.md`, `openspec/changes/archive/2026-09-29-add-match-series/design.md` |
 | Full RRULE / ICS export | Weekly materialization only; no ICS, no full RRULE engine. | `src/modules/matches/README.md` |

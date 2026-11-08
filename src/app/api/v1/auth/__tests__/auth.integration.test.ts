@@ -3,7 +3,7 @@ import { POST as register } from "@/app/api/v1/auth/register/route";
 import { POST as login } from "@/app/api/v1/auth/login/route";
 import { POST as logout } from "@/app/api/v1/auth/logout/route";
 import { GET as csrf } from "@/app/api/v1/auth/csrf/route";
-import { GET as me } from "@/app/api/v1/me/route";
+import { GET as me, PATCH as patchMe } from "@/app/api/v1/me/route";
 import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/http/cookies";
 import { ensureTestSchema, resetAuthTables } from "@/lib/db/test-helpers";
 import { DomainErrorCode } from "@/lib/errors/domain-error";
@@ -38,9 +38,10 @@ function jsonRequest(
   path: string,
   body: unknown,
   extraHeaders: Record<string, string> = {},
+  method = "POST",
 ): Request {
   return new Request(`${ORIGIN}${path}`, {
-    method: "POST",
+    method,
     headers: {
       "content-type": "application/json",
       origin: ORIGIN,
@@ -219,5 +220,76 @@ describe("auth HTTP integration", () => {
     expect(meRes.status).toBe(401);
     const meBody = (await meRes.json()) as { code: string };
     expect(meBody.code).toBe(DomainErrorCode.UNAUTHENTICATED);
+  });
+
+  it("updates timezone via PATCH /me and rejects invalid timezone or missing CSRF", async () => {
+    const { token, cookieHeader } = await csrfPair();
+    const created = await register(
+      jsonRequest("/api/v1/auth/register", registerBody, {
+        cookie: cookieHeader,
+        "x-csrf-token": token,
+      }),
+    );
+    expect(created.status).toBe(201);
+    const setCookie = created.headers.getSetCookie();
+    const sessionToken = cookieFromSetCookie(setCookie, SESSION_COOKIE_NAME);
+    const csrfToken =
+      cookieFromSetCookie(setCookie, CSRF_COOKIE_NAME) ?? token;
+    const authCookie = [
+      `${SESSION_COOKIE_NAME}=${encodeURIComponent(sessionToken ?? "")}`,
+      `${CSRF_COOKIE_NAME}=${encodeURIComponent(csrfToken)}`,
+    ].join("; ");
+
+    const patched = await patchMe(
+      jsonRequest(
+        "/api/v1/me",
+        { timezone: "Europe/Madrid" },
+        { cookie: authCookie, "x-csrf-token": csrfToken },
+        "PATCH",
+      ),
+    );
+    expect(patched.status).toBe(200);
+    const patchedBody = (await patched.json()) as {
+      user: { timezone: string; displayName: string };
+    };
+    expect(patchedBody.user.timezone).toBe("Europe/Madrid");
+    expect(patchedBody.user.displayName).toBe("Casey");
+
+    const meRes = await me(
+      new Request(`${ORIGIN}/api/v1/me`, {
+        headers: { cookie: authCookie },
+      }),
+    );
+    expect(meRes.status).toBe(200);
+    const meBody = (await meRes.json()) as { user: { timezone: string } };
+    expect(meBody.user.timezone).toBe("Europe/Madrid");
+
+    const invalid = await patchMe(
+      jsonRequest(
+        "/api/v1/me",
+        { timezone: "Not/AZone" },
+        { cookie: authCookie, "x-csrf-token": csrfToken },
+        "PATCH",
+      ),
+    );
+    expect(invalid.status).toBe(400);
+    const invalidBody = (await invalid.json()) as {
+      code: string;
+      fields?: { timezone?: string };
+    };
+    expect(invalidBody.code).toBe(DomainErrorCode.VALIDATION_ERROR);
+    expect(invalidBody.fields?.timezone).toBeTruthy();
+
+    const noCsrf = await patchMe(
+      jsonRequest(
+        "/api/v1/me",
+        { timezone: "Europe/London" },
+        { cookie: `${SESSION_COOKIE_NAME}=${encodeURIComponent(sessionToken ?? "")}` },
+        "PATCH",
+      ),
+    );
+    expect(noCsrf.status).toBe(403);
+    const noCsrfBody = (await noCsrf.json()) as { code: string };
+    expect(noCsrfBody.code).toBe(DomainErrorCode.CSRF_REJECTED);
   });
 });

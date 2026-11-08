@@ -74,6 +74,26 @@ export const sessions = pgTable(
   ],
 );
 
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true, mode: "date" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("password_reset_tokens_token_hash_unique").on(table.tokenHash),
+    index("password_reset_tokens_user_id_idx").on(table.userId),
+  ],
+);
+
 export const groups = pgTable(
   "groups",
   {
@@ -390,6 +410,7 @@ export const noShowsRelations = relations(noShows, ({ one }) => ({
 export const CORE_TABLES = [
   "users",
   "sessions",
+  "password_reset_tokens",
   "groups",
   "group_memberships",
   "group_invites",

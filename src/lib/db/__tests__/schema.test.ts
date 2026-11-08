@@ -6,6 +6,7 @@ import {
   groups,
   matchSeries,
   matches,
+  passwordResetTokens,
   rsvps,
   sessions,
   users,
@@ -15,6 +16,7 @@ describe("core drizzle schema", () => {
   it("exports the core tables", () => {
     expect(users).toBeDefined();
     expect(sessions).toBeDefined();
+    expect(passwordResetTokens).toBeDefined();
     expect(groups).toBeDefined();
     expect(groupMemberships).toBeDefined();
     expect(groupInvites).toBeDefined();
@@ -27,6 +29,7 @@ describe("core drizzle schema", () => {
     expect([...CORE_TABLES]).toEqual([
       "users",
       "sessions",
+      "password_reset_tokens",
       "groups",
       "group_memberships",
       "group_invites",
