@@ -16,6 +16,10 @@ export type UserRepository = {
     displayName: string;
     timezone: string;
   }): Promise<UserRecord>;
+  update(
+    id: string,
+    patch: { displayName?: string; timezone?: string },
+  ): Promise<UserRecord>;
 };
 
 export type SessionRepository = {

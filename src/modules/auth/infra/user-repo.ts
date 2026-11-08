@@ -56,5 +56,25 @@ export function createUserRepository(db: Db): UserRepository {
         throw mapUnknownError(err);
       }
     },
+    async update(id, patch) {
+      const values: Partial<typeof users.$inferInsert> = {
+        updatedAt: new Date(),
+      };
+      if (patch.displayName !== undefined) {
+        values.displayName = patch.displayName;
+      }
+      if (patch.timezone !== undefined) {
+        values.timezone = patch.timezone;
+      }
+      const [row] = await db
+        .update(users)
+        .set(values)
+        .where(eq(users.id, id))
+        .returning();
+      if (!row) {
+        throw new Error("update users returned no row");
+      }
+      return toUserRecord(row);
+    },
   };
 }

@@ -25,8 +25,29 @@ export const loginBodySchema = z.object({
   password: z.string().min(1, "Password is required").max(128),
 });
 
+export const updateProfileBodySchema = z
+  .object({
+    displayName: z
+      .string()
+      .trim()
+      .min(1, "Display name is required")
+      .max(80, "Display name is too long")
+      .optional(),
+    timezone: z
+      .string()
+      .trim()
+      .min(1, "Timezone is required")
+      .refine(isValidIanaTimeZone, "Enter a valid IANA timezone")
+      .optional(),
+  })
+  .refine(
+    (value) => value.displayName !== undefined || value.timezone !== undefined,
+    { message: "Provide displayName or timezone" },
+  );
+
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
+export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>;
 
 export function validationErrorFromZod(error: z.ZodError): DomainError {
   const fields: Record<string, string> = {};

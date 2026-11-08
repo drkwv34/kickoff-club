@@ -4,4 +4,5 @@ export { registerUser } from "./domain/register";
 export { loginUser } from "./domain/login";
 export { logoutSession } from "./domain/logout";
 export { resolveSession } from "./domain/resolve-session";
+export { updateProfile } from "./domain/update-profile";
 export { getAuthDeps } from "./composition";

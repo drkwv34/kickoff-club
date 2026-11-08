@@ -21,6 +21,7 @@ export function SiteHeader({
             <>
               <Link href="/app">Dashboard</Link>
               <NotificationsNav unreadCount={unreadNotifications} />
+              <Link href="/app/settings">Settings</Link>
               <span className="nav-user">{user.displayName}</span>
               <LogoutButton />
             </>

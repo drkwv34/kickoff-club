@@ -8,6 +8,7 @@ import { loginUser } from "../login";
 import { logoutSession } from "../logout";
 import { registerUser } from "../register";
 import { resolveSession } from "../resolve-session";
+import { updateProfile } from "../update-profile";
 
 function fakeHasher(): PasswordHasher {
   return {
@@ -54,6 +55,14 @@ function memoryDeps(): AuthDeps & {
         updatedAt: now,
       };
       userStore.push(user);
+      return user;
+    },
+    async update(id, patch) {
+      const user = userStore.find((u) => u.id === id);
+      if (!user) throw new Error("user not found");
+      if (patch.displayName !== undefined) user.displayName = patch.displayName;
+      if (patch.timezone !== undefined) user.timezone = patch.timezone;
+      user.updatedAt = now;
       return user;
     },
   };
@@ -165,6 +174,33 @@ describe("loginUser", () => {
     expect(b.code).toBe(DomainErrorCode.INVALID_CREDENTIALS);
     expect(a.message).toBe(INVALID_CREDENTIALS_MESSAGE);
     expect(b.message).toBe(a.message);
+  });
+});
+
+describe("updateProfile", () => {
+  it("updates timezone without changing display name", async () => {
+    const deps = memoryDeps();
+    const registered = await registerUser(validRegister, deps);
+    const updated = await updateProfile(
+      { userId: registered.user.id, timezone: "Europe/Madrid" },
+      deps,
+    );
+    expect(updated.timezone).toBe("Europe/Madrid");
+    expect(updated.displayName).toBe("Ada");
+  });
+
+  it("rejects an invalid timezone", async () => {
+    const deps = memoryDeps();
+    const registered = await registerUser(validRegister, deps);
+    await expect(
+      updateProfile(
+        { userId: registered.user.id, timezone: "Not/AZone" },
+        deps,
+      ),
+    ).rejects.toMatchObject({
+      code: DomainErrorCode.VALIDATION_ERROR,
+      details: { fields: { timezone: "Enter a valid IANA timezone" } },
+    });
   });
 });
 
