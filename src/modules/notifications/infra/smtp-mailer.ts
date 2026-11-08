@@ -31,8 +31,21 @@ function textBody(template: NotificationMailTemplate, payload: Record<string, un
       return `Your RSVP is confirmed for ${matchTitle}.`;
     case "match_cancelled":
       return `The match ${matchTitle} was cancelled.`;
-    case "invite_received":
-      return `You joined ${String(payload.groupName ?? "a group")} on kickoff-club.`;
+    case "invite_received": {
+      const groupName = String(payload.groupName ?? "a group");
+      const code = payload.code ? String(payload.code) : "";
+      const acceptUrl = payload.acceptUrl ? String(payload.acceptUrl) : "";
+      if (code || acceptUrl) {
+        return [
+          `You're invited to join ${groupName} on kickoff-club.`,
+          code ? `Invite code: ${code}` : null,
+          acceptUrl ? `Accept: ${acceptUrl}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n");
+      }
+      return `You joined ${groupName} on kickoff-club.`;
+    }
     case "no_show_marked":
       return `An organizer marked you as a no-show for ${matchTitle}.`;
     case "match_updated":

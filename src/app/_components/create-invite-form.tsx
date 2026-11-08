@@ -26,6 +26,7 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
     const form = new FormData(event.currentTarget);
     const maxUsesRaw = String(form.get("maxUses") ?? "50");
     const maxUses = Number.parseInt(maxUsesRaw, 10);
+    const email = String(form.get("email") ?? "").trim();
 
     try {
       const res = await fetch(`/api/v1/groups/${groupId}/invites`, {
@@ -35,7 +36,10 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
           "content-type": "application/json",
           "x-csrf-token": csrf,
         },
-        body: JSON.stringify({ maxUses }),
+        body: JSON.stringify({
+          maxUses,
+          ...(email ? { email } : {}),
+        }),
       });
       const body = (await res.json().catch(() => ({}))) as {
         message?: string;
@@ -72,6 +76,20 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
           />
           <p id="maxUses-hint" className="field-hint">
             How many players can use this invite link before it stops working.
+          </p>
+        </div>
+        <div className="field">
+          <label htmlFor="invite-email">Email (optional)</label>
+          <input
+            id="invite-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            disabled={pending || !csrf}
+            aria-describedby="invite-email-hint"
+          />
+          <p id="invite-email-hint" className="field-hint">
+            Send the invite code and accept link to this address.
           </p>
         </div>
         <button type="submit" className="btn" disabled={pending || !csrf}>
