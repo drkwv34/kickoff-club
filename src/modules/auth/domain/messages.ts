@@ -6,3 +6,6 @@ export const EMAIL_TAKEN_MESSAGE = "Email already registered";
 export const AUTH_REQUIRED_MESSAGE = "Authentication required";
 
 export const CSRF_REJECTED_MESSAGE = "CSRF token missing or invalid";
+
+export const PASSWORD_RESET_GONE_MESSAGE =
+  "This reset link is invalid or has expired";

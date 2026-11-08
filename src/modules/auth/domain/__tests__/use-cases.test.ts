@@ -1,14 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
 import { INVALID_CREDENTIALS_MESSAGE } from "../messages";
-import type { AuthDeps, PasswordHasher, SessionRepository, UserRepository } from "../ports";
+import type {
+  AuthDeps,
+  PasswordHasher,
+  PasswordResetTokenRepository,
+  SessionRepository,
+  UserRepository,
+} from "../ports";
 import type { SessionRecord } from "../session";
 import type { UserRecord } from "../user";
+import type { PasswordResetTokenRecord } from "../password-reset";
 import { loginUser } from "../login";
 import { logoutSession } from "../logout";
 import { registerUser } from "../register";
 import { resolveSession } from "../resolve-session";
 import { updateProfile } from "../update-profile";
+import {
+  confirmPasswordReset,
+  requestPasswordReset,
+} from "../password-reset";
 
 function fakeHasher(): PasswordHasher {
   return {
@@ -65,6 +76,13 @@ function memoryDeps(): AuthDeps & {
       user.updatedAt = now;
       return user;
     },
+    async updatePassword(id, passwordHash) {
+      const user = userStore.find((u) => u.id === id);
+      if (!user) throw new Error("user not found");
+      user.passwordHash = passwordHash;
+      user.updatedAt = now;
+      return user;
+    },
   };
 
   const sessions: SessionRepository = {
@@ -96,15 +114,51 @@ function memoryDeps(): AuthDeps & {
       const session = sessionStore.find((s) => s.id === id);
       if (session && !session.revokedAt) session.revokedAt = revokedAt;
     },
+    async revokeAllForUser(userId, revokedAt) {
+      for (const session of sessionStore) {
+        if (session.userId === userId && !session.revokedAt) {
+          session.revokedAt = revokedAt;
+        }
+      }
+    },
     async touchExpiry(id, expiresAt) {
       const session = sessionStore.find((s) => s.id === id);
       if (session) session.expiresAt = expiresAt;
     },
   };
 
+  const resetStore: PasswordResetTokenRecord[] = [];
+  const passwordResets: PasswordResetTokenRepository = {
+    async create(input) {
+      const record: PasswordResetTokenRecord = {
+        id: `reset-${seq++}`,
+        userId: input.userId,
+        tokenHash: input.tokenHash,
+        expiresAt: input.expiresAt,
+        usedAt: null,
+        createdAt: input.createdAt,
+      };
+      resetStore.push(record);
+      return record;
+    },
+    async findByTokenHash(tokenHash) {
+      return resetStore.find((row) => row.tokenHash === tokenHash) ?? null;
+    },
+    async markUsed(id, usedAt) {
+      const row = resetStore.find((entry) => entry.id === id);
+      if (row && !row.usedAt) row.usedAt = usedAt;
+    },
+    async invalidateUnusedForUser(userId, usedAt) {
+      for (const row of resetStore) {
+        if (row.userId === userId && !row.usedAt) row.usedAt = usedAt;
+      }
+    },
+  };
+
   const deps: AuthDeps = {
     users,
     sessions,
+    passwordResets,
     passwords: fakeHasher(),
     clock: () => now,
     randomToken: () => `tok-${seq++}`,
@@ -201,6 +255,37 @@ describe("updateProfile", () => {
       code: DomainErrorCode.VALIDATION_ERROR,
       details: { fields: { timezone: "Enter a valid IANA timezone" } },
     });
+  });
+});
+
+describe("password reset", () => {
+  it("returns a token for a known email and null for unknown", async () => {
+    const deps = memoryDeps();
+    await registerUser(validRegister, deps);
+    const known = await requestPasswordReset(validRegister.email, deps);
+    expect(known?.token).toBeTruthy();
+    const unknown = await requestPasswordReset("missing@example.com", deps);
+    expect(unknown).toBeNull();
+  });
+
+  it("confirms a valid token and rejects a reused one", async () => {
+    const deps = memoryDeps();
+    const registered = await registerUser(validRegister, deps);
+    const issued = await requestPasswordReset(validRegister.email, deps);
+    expect(issued).toBeTruthy();
+    const confirmed = await confirmPasswordReset(
+      { token: issued!.token, password: "newpassword12" },
+      deps,
+    );
+    expect(confirmed.user.id).toBe(registered.user.id);
+    const old = await resolveSession(registered.sessionToken, deps);
+    expect(old).toBeNull();
+    await expect(
+      confirmPasswordReset(
+        { token: issued!.token, password: "anotherpass12" },
+        deps,
+      ),
+    ).rejects.toMatchObject({ code: DomainErrorCode.GONE });
   });
 });
 

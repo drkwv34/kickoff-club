@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db/client";
 import { randomSessionToken } from "./domain/crypto";
 import type { AuthDeps } from "./domain/ports";
 import { createArgon2PasswordHasher } from "./infra/argon2-hasher";
+import { createPasswordResetTokenRepository } from "./infra/password-reset-repo";
 import { createSessionRepository } from "./infra/session-repo";
 import { createUserRepository } from "./infra/user-repo";
 
@@ -14,6 +15,7 @@ export function getAuthDeps(): AuthDeps {
     cached = {
       users: createUserRepository(db),
       sessions: createSessionRepository(db),
+      passwordResets: createPasswordResetTokenRepository(db),
       passwords: createArgon2PasswordHasher(),
       clock: () => new Date(),
       randomToken: randomSessionToken,

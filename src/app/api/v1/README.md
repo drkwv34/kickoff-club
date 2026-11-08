@@ -8,6 +8,8 @@ REST JSON under `/api/v1`. Auth is a session cookie (`kickoff_session`) plus CSR
 | POST | `/api/v1/auth/register` | Public + CSRF | 201 |
 | POST | `/api/v1/auth/login` | Public + CSRF | 200 |
 | POST | `/api/v1/auth/logout` | CSRF (session optional) | 204 |
+| POST | `/api/v1/auth/password-reset` | Public + CSRF | 200 |
+| POST | `/api/v1/auth/password-reset/confirm` | Public + CSRF | 200 |
 | GET | `/api/v1/me` | User | 200 |
 | PATCH | `/api/v1/me` | User + CSRF | 200 |
 | POST | `/api/v1/groups` | User + CSRF | 201 |

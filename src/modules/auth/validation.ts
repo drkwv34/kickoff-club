@@ -45,9 +45,27 @@ export const updateProfileBodySchema = z
     { message: "Provide displayName or timezone" },
   );
 
+export const passwordResetRequestBodySchema = z.object({
+  email: z.string().trim().email("Enter a valid email").max(320),
+});
+
+export const passwordResetConfirmBodySchema = z.object({
+  token: z.string().trim().min(1, "Reset token is required"),
+  password: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(128, "Password is too long"),
+});
+
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
 export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>;
+export type PasswordResetRequestBody = z.infer<
+  typeof passwordResetRequestBodySchema
+>;
+export type PasswordResetConfirmBody = z.infer<
+  typeof passwordResetConfirmBodySchema
+>;
 
 export function validationErrorFromZod(error: z.ZodError): DomainError {
   const fields: Record<string, string> = {};

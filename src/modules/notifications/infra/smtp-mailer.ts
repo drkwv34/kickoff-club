@@ -17,6 +17,8 @@ function subjectFor(template: NotificationMailTemplate, payload: Record<string, 
       return `No-show recorded for ${matchTitle}`;
     case "match_updated":
       return `Match updated: ${matchTitle}`;
+    case "password_reset":
+      return "Reset your kickoff-club password";
     default:
       return "kickoff-club notification";
   }
@@ -50,6 +52,17 @@ function textBody(template: NotificationMailTemplate, payload: Record<string, un
       return `An organizer marked you as a no-show for ${matchTitle}.`;
     case "match_updated":
       return `The match ${matchTitle} was updated. Check the new time or venue.`;
+    case "password_reset": {
+      const resetUrl = payload.resetUrl ? String(payload.resetUrl) : "";
+      const token = payload.token ? String(payload.token) : "";
+      return [
+        "Use this link to choose a new password. It expires in one hour and can be used once.",
+        resetUrl ? `Reset: ${resetUrl}` : null,
+        token ? `Token: ${token}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
     default:
       return JSON.stringify(payload);
   }

@@ -76,5 +76,16 @@ export function createUserRepository(db: Db): UserRepository {
       }
       return toUserRecord(row);
     },
+    async updatePassword(id, passwordHash) {
+      const [row] = await db
+        .update(users)
+        .set({ passwordHash, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+      if (!row) {
+        throw new Error("update users password returned no row");
+      }
+      return toUserRecord(row);
+    },
   };
 }

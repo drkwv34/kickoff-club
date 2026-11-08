@@ -19,7 +19,8 @@ export type NotificationMailTemplate =
   | "waitlist_promoted"
   | "match_cancelled"
   | "no_show_marked"
-  | "match_updated";
+  | "match_updated"
+  | "password_reset";
 
 export type NotificationMailer = {
   send(input: {

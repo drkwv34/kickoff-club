@@ -72,6 +72,12 @@ export function createSessionRepository(db: Db): SessionRepository {
         .set({ revokedAt })
         .where(and(eq(sessions.id, id), isNull(sessions.revokedAt)));
     },
+    async revokeAllForUser(userId, revokedAt) {
+      await db
+        .update(sessions)
+        .set({ revokedAt })
+        .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
+    },
     async touchExpiry(id, expiresAt) {
       await db.update(sessions).set({ expiresAt }).where(eq(sessions.id, id));
     },
