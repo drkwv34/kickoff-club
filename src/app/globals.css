@@ -526,7 +526,7 @@ input:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  align-items: end;
+  align-items: flex-end;
   margin: var(--space-4) 0;
 }
 
