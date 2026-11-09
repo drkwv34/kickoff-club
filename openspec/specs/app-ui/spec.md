@@ -97,3 +97,12 @@ The notifications page SHALL show labeled in-app and email toggles for each supp
 
 - **WHEN** an authenticated user opens `/app/notifications`
 - **THEN** the page shows in-app and email controls for each notification type
+
+### Requirement: Unmark no-show control
+
+When an organizer views a match that has started and a player is marked no-show, the UI SHALL provide a control to unmark that player.
+
+#### Scenario: Organizer sees unmark button
+
+- **WHEN** an organizer opens a started match with a marked no-show
+- **THEN** an unmark control is visible for that player

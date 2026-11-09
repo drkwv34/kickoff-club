@@ -193,3 +193,19 @@ When an organizer updates a scheduled match and the stored start time, end time,
 - **WHEN** an organizer PATCHes only `description` on a match that has going or waitlisted members
 - **THEN** no `match_updated` notification is created
 - **AND** the mailer is not invoked with `match_updated`
+
+### Requirement: Unmark no-show
+
+Organizers SHALL unmark a no-show via `DELETE /api/v1/matches/:id/no-shows/:userId`. The system MUST delete the `no_shows` row for that match and user and recompute `group_memberships.no_show_count` for that user in the match’s group. Non-organizers MUST receive forbidden.
+
+#### Scenario: Organizer unmarks no-show
+
+- **WHEN** an organizer has marked a going player as no-show
+- **AND** the organizer DELETEs `/api/v1/matches/:id/no-shows/:userId`
+- **THEN** the response is HTTP 204
+- **AND** that membership `no_show_count` is 0 when no other no-shows remain
+
+#### Scenario: Player cannot unmark
+
+- **WHEN** a non-organizer member DELETEs `/api/v1/matches/:id/no-shows/:userId`
+- **THEN** the system responds with forbidden
