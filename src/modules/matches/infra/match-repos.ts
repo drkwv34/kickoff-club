@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt, gte, lt, lte, or } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { matches } from "@/lib/db/schema";
 import { mapUnknownError } from "@/lib/errors/domain-error";
@@ -103,12 +103,43 @@ export function createMatchRepository(db: Db): MatchRepository {
       return row ? toMatch(row) : null;
     },
 
-    async listByGroupId(groupId) {
-      const rows = await db
+    async listByGroupId(groupId, query) {
+      const filters = [eq(matches.groupId, groupId)];
+      if (query.status) {
+        filters.push(eq(matches.status, query.status));
+      }
+      if (query.when === "upcoming") {
+        filters.push(gte(matches.startAt, query.now));
+      } else if (query.when === "past") {
+        filters.push(lt(matches.startAt, query.now));
+      }
+      if (query.from) {
+        filters.push(gte(matches.startAt, query.from));
+      }
+      if (query.to) {
+        filters.push(lte(matches.startAt, query.to));
+      }
+      if (query.after) {
+        filters.push(
+          or(
+            gt(matches.startAt, query.after.startAt),
+            and(
+              eq(matches.startAt, query.after.startAt),
+              gt(matches.id, query.after.id),
+            ),
+          )!,
+        );
+      }
+
+      const fetchLimit = query.limit ? query.limit + 1 : undefined;
+      const filtered = db
         .select()
         .from(matches)
-        .where(eq(matches.groupId, groupId))
-        .orderBy(asc(matches.startAt));
+        .where(and(...filters))
+        .orderBy(asc(matches.startAt), asc(matches.id));
+      const rows = fetchLimit
+        ? await filtered.limit(fetchLimit)
+        : await filtered;
       return rows.map(toMatch);
     },
 

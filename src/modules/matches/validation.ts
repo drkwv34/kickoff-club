@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidIanaTimeZone } from "@/modules/auth/domain/timezone";
 import { SPORTS } from "@/modules/groups/domain/types";
+import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
 import { validationErrorFromZod } from "@/modules/groups/validation";
 import {
   MAX_WEEKLY_INTERVAL,
@@ -145,3 +146,62 @@ export const markNoShowBodySchema = z.object({
 });
 
 export type MarkNoShowBody = z.infer<typeof markNoShowBodySchema>;
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseQueryBound(value: string, endOfDay: boolean): Date {
+  const normalized = DATE_ONLY.test(value)
+    ? `${value}T${endOfDay ? "23:59:59.999Z" : "00:00:00.000Z"}`
+    : value;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new DomainError(DomainErrorCode.VALIDATION_ERROR, "Invalid date/time", {
+      fields: { [endOfDay ? "to" : "from"]: "Enter a valid ISO-8601 date/time" },
+    });
+  }
+  return parsed;
+}
+
+export const matchListQuerySchema = z.object({
+  when: z.enum(["upcoming", "past"]).optional(),
+  status: z.enum(["scheduled", "cancelled"]).optional(),
+  from: z.string().trim().min(1).optional(),
+  to: z.string().trim().min(1).optional(),
+  cursor: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export function parseMatchListQuery(search: URLSearchParams): {
+  when?: "upcoming" | "past";
+  status?: "scheduled" | "cancelled";
+  from?: Date;
+  to?: Date;
+  cursor?: string;
+  limit?: number;
+} {
+  const blankToUndefined = (value: string | null) => {
+    const trimmed = value?.trim() ?? "";
+    return trimmed.length > 0 ? trimmed : undefined;
+  };
+  const parsed = matchListQuerySchema.safeParse({
+    when: blankToUndefined(search.get("when")),
+    status: blankToUndefined(search.get("status")),
+    from: blankToUndefined(search.get("from")),
+    to: blankToUndefined(search.get("to")),
+    cursor: blankToUndefined(search.get("cursor")),
+    limit: blankToUndefined(search.get("limit")),
+  });
+  if (!parsed.success) {
+    throw validationErrorFromZod(parsed.error);
+  }
+  return {
+    when: parsed.data.when,
+    status: parsed.data.status,
+    from: parsed.data.from
+      ? parseQueryBound(parsed.data.from, false)
+      : undefined,
+    to: parsed.data.to ? parseQueryBound(parsed.data.to, true) : undefined,
+    cursor: parsed.data.cursor,
+    limit: parsed.data.limit,
+  };
+}

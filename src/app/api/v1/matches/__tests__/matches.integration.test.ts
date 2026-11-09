@@ -665,11 +665,7 @@ describe("matches HTTP integration", () => {
       `?when=upcoming&limit=2&cursor=${encodeURIComponent(page1.nextCursor ?? "")}`,
     );
     expect(page2.matches).toHaveLength(2);
-    const page3 = await list(
-      `?when=upcoming&limit=2&cursor=${encodeURIComponent(page2.nextCursor ?? "")}`,
-    );
-    expect(page3.matches).toHaveLength(0);
-    expect(page3.nextCursor).toBeNull();
+    expect(page2.nextCursor).toBeNull();
 
     const pagedIds = [...page1.matches, ...page2.matches].map((row) => row.id);
     expect(pagedIds).toEqual([

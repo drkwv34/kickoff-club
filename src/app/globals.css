@@ -521,3 +521,17 @@ input:focus-visible {
   justify-content: space-between;
   gap: var(--space-3);
 }
+
+.match-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+  margin: var(--space-4) 0;
+}
+
+.match-filters .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}

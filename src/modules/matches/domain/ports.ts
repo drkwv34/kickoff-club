@@ -12,6 +12,18 @@ export type SeriesRepository = {
   findById(id: string): Promise<SeriesRecord | null>;
 };
 
+export type MatchListWhen = "upcoming" | "past";
+
+export type MatchListQuery = {
+  now: Date;
+  when?: MatchListWhen;
+  status?: MatchStatus;
+  from?: Date;
+  to?: Date;
+  after?: { startAt: Date; id: string };
+  limit?: number;
+};
+
 export type MatchRepository = {
   create(input: {
     groupId: string;
@@ -43,7 +55,7 @@ export type MatchRepository = {
   ): Promise<MatchRecord[]>;
   findById(id: string): Promise<MatchRecord | null>;
   findByIdForUpdate(id: string): Promise<MatchRecord | null>;
-  listByGroupId(groupId: string): Promise<MatchRecord[]>;
+  listByGroupId(groupId: string, query: MatchListQuery): Promise<MatchRecord[]>;
   listBySeriesId(seriesId: string): Promise<MatchRecord[]>;
   cancelScheduledBySeriesId(seriesId: string, updatedAt: Date): Promise<MatchRecord[]>;
   update(
