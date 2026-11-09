@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation";
+import { NotificationPreferencesForm } from "@/app/_components/notification-preferences-form";
 import { NotificationsList } from "@/app/_components/notifications-list";
 import { getServerSession } from "@/lib/http/server-session";
-import { getNotificationsDeps, listNotifications } from "@/modules/notifications";
+import {
+  getNotificationsDeps,
+  listNotificationPreferences,
+  listNotifications,
+} from "@/modules/notifications";
 
 export default async function NotificationsPage() {
   const session = await getServerSession();
@@ -9,10 +14,11 @@ export default async function NotificationsPage() {
     redirect("/login");
   }
 
-  const { notifications, unreadCount } = await listNotifications(
-    session.user.id,
-    getNotificationsDeps(),
-  );
+  const deps = getNotificationsDeps();
+  const [{ notifications, unreadCount }, { preferences }] = await Promise.all([
+    listNotifications(session.user.id, deps),
+    listNotificationPreferences(session.user.id, deps),
+  ]);
 
   return (
     <main className="shell">
@@ -21,6 +27,7 @@ export default async function NotificationsPage() {
         initialNotifications={notifications}
         initialUnreadCount={unreadCount}
       />
+      <NotificationPreferencesForm initialPreferences={preferences} />
     </main>
   );
 }

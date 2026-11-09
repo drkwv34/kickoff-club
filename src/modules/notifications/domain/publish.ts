@@ -21,13 +21,26 @@ export async function publishNotification(
     payload: Record<string, unknown>;
   },
 ): Promise<void> {
-  const now = deps.clock();
-  await deps.notifications.create({
-    userId: input.userId,
-    type: input.type,
-    payloadJson: input.payload,
-    createdAt: now,
-  });
+  const prefs = await deps.preferences.findByUserAndType(
+    input.userId,
+    input.type,
+  );
+  const inAppEnabled = prefs?.inApp ?? true;
+  const emailEnabled = prefs?.email ?? true;
+
+  if (inAppEnabled) {
+    const now = deps.clock();
+    await deps.notifications.create({
+      userId: input.userId,
+      type: input.type,
+      payloadJson: input.payload,
+      createdAt: now,
+    });
+  }
+
+  if (!emailEnabled) {
+    return;
+  }
 
   const email = await deps.resolveUserEmail(input.userId);
   if (!email) {

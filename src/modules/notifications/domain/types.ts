@@ -35,3 +35,21 @@ export function toPublicNotification(row: NotificationRecord): PublicNotificatio
     createdAt: row.createdAt.toISOString(),
   };
 }
+
+export type NotificationPreferenceRecord = {
+  userId: string;
+  type: NotificationType;
+  inApp: boolean;
+  email: boolean;
+  updatedAt: Date;
+};
+
+export type PublicNotificationPreference = {
+  type: NotificationType;
+  inApp: boolean;
+  email: boolean;
+};
+
+export function defaultPreference(type: NotificationType): PublicNotificationPreference {
+  return { type, inApp: true, email: true };
+}

@@ -472,3 +472,33 @@ input:focus-visible {
   gap: var(--space-3);
   max-width: 20rem;
 }
+
+.notification-preferences {
+  margin-top: var(--space-6);
+}
+
+.preference-list {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.preference-list fieldset {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-surface);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.preference-list legend {
+  font-weight: 600;
+}
+
+.preference-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}

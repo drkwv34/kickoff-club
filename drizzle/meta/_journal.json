@@ -57,6 +57,13 @@
       "when": 1794100800000,
       "tag": "20261108120000_create_password_reset_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794187200000,
+      "tag": "20261109120000_create_notification_preferences",
+      "breakpoints": true
     }
   ]
 }

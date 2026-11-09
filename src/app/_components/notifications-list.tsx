@@ -23,6 +23,8 @@ function describeNotification(item: PublicNotification): string {
       return `Joined group: ${title}`;
     case "no_show_marked":
       return `No-show marked: ${title}`;
+    case "match_updated":
+      return `Match updated: ${title}`;
     default:
       return item.type;
   }

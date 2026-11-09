@@ -1,4 +1,5 @@
 import {
+  boolean,
   customType,
   index,
   integer,
@@ -384,12 +385,43 @@ export const noShows = pgTable(
   ],
 );
 
+export const notificationPreferences = pgTable(
+  "notification_preferences",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    inApp: boolean("in_app").notNull().default(true),
+    email: boolean("email").notNull().default(true),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({
+      name: "notification_preferences_pk",
+      columns: [table.userId, table.type],
+    }),
+  ],
+);
+
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
     references: [users.id],
   }),
 }));
+
+export const notificationPreferencesRelations = relations(
+  notificationPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [notificationPreferences.userId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const noShowsRelations = relations(noShows, ({ one }) => ({
   match: one(matches, {
@@ -418,5 +450,6 @@ export const CORE_TABLES = [
   "matches",
   "rsvps",
   "notifications",
+  "notification_preferences",
   "no_shows",
 ] as const;
