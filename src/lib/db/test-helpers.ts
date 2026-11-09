@@ -27,5 +27,5 @@ export async function ensureTestSchema(): Promise<void> {
 
 export async function resetAuthTables(): Promise<void> {
   const sql = await getTestSql();
-  await sql`TRUNCATE TABLE no_shows, notifications, rsvps, matches, match_series, group_invites, group_memberships, groups, password_reset_tokens, sessions, users RESTART IDENTITY CASCADE`;
+  await sql`TRUNCATE TABLE no_shows, notification_preferences, notifications, rsvps, matches, match_series, group_invites, group_memberships, groups, password_reset_tokens, sessions, users RESTART IDENTITY CASCADE`;
 }

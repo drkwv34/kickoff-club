@@ -13,3 +13,4 @@ export {
   timeZoneLabelsDiffer,
 } from "./domain/time-display";
 export { getMatchesDeps } from "./composition";
+export { unmarkNoShow, listNoShowsForMatch } from "./domain/unmark-no-show";

@@ -37,6 +37,7 @@ describe("core drizzle schema", () => {
       "matches",
       "rsvps",
       "notifications",
+      "notification_preferences",
       "no_shows",
     ]);
   });

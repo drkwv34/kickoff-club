@@ -11,6 +11,7 @@ import { listMatchesForGroup } from "@/modules/matches/domain/list-matches";
 import { parseInstant } from "@/modules/matches/domain/schedule";
 import {
   createMatchBodySchema,
+  parseMatchListQuery,
   validationErrorFromZod,
 } from "@/modules/matches/validation";
 
@@ -26,10 +27,12 @@ export async function GET(
   return handleApi(request, "GET /api/v1/groups/:id/matches", async ({ logger }) => {
     const session = await requireSession(request);
     const { groupId } = await context.params;
+    const filters = parseMatchListQuery(new URL(request.url).searchParams);
     const result = await listMatchesForGroup(
       groupId,
       session.user.id,
       getMatchesDeps(),
+      filters,
     );
     logger.info("list matches", {
       userId: session.user.id,

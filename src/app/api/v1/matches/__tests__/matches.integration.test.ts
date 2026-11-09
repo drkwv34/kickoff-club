@@ -556,4 +556,124 @@ describe("matches HTTP integration", () => {
       setNotificationsMailerForTests(null);
     }
   });
+
+  it("filters match lists and pages with nextCursor without duplicates or gaps", async () => {
+    const organizer = await registerSession("list-org@example.com", "Lister");
+    const groupRes = await createGroup(
+      jsonRequest("/api/v1/groups", groupBody, authHeaders(organizer)),
+    );
+    expect(groupRes.status).toBe(201);
+    const { group } = (await groupRes.json()) as { group: { id: string } };
+
+    async function addMatch(title: string, startAt: string, endAt: string) {
+      const created = await createMatch(
+        jsonRequest(
+          `/api/v1/groups/${group.id}/matches`,
+          {
+            ...matchBody,
+            title,
+            startAt,
+            endAt,
+          },
+          authHeaders(organizer),
+        ),
+        { params: Promise.resolve({ groupId: group.id }) },
+      );
+      expect(created.status).toBe(201);
+      const body = (await created.json()) as { match: { id: string; startAt: string } };
+      return body.match;
+    }
+
+    const past = await addMatch(
+      "Past kickabout",
+      "2020-01-16T00:00:00.000Z",
+      "2020-01-16T02:00:00.000Z",
+    );
+    const upcomingA = await addMatch(
+      "Upcoming A",
+      "2028-01-16T00:00:00.000Z",
+      "2028-01-16T02:00:00.000Z",
+    );
+    const upcomingB = await addMatch(
+      "Upcoming B",
+      "2028-02-16T00:00:00.000Z",
+      "2028-02-16T02:00:00.000Z",
+    );
+    const upcomingC = await addMatch(
+      "Upcoming C",
+      "2028-03-16T00:00:00.000Z",
+      "2028-03-16T02:00:00.000Z",
+    );
+    const cancelled = await addMatch(
+      "Cancelled later",
+      "2028-04-16T00:00:00.000Z",
+      "2028-04-16T02:00:00.000Z",
+    );
+    const cancelRes = await cancelMatch(
+      jsonRequest(
+        `/api/v1/matches/${cancelled.id}/cancel`,
+        {},
+        authHeaders(organizer),
+      ),
+      { params: Promise.resolve({ matchId: cancelled.id }) },
+    );
+    expect(cancelRes.status).toBe(200);
+
+    type ListBody = {
+      matches: Array<{ id: string; status: string; startAt: string }>;
+      nextCursor: string | null;
+    };
+
+    async function list(query: string): Promise<ListBody> {
+      const res = await listMatches(
+        new Request(`${ORIGIN}/api/v1/groups/${group.id}/matches${query}`, {
+          headers: { cookie: organizer.cookieHeader },
+        }),
+        { params: Promise.resolve({ groupId: group.id }) },
+      );
+      expect(res.status).toBe(200);
+      return (await res.json()) as ListBody;
+    }
+
+    const upcoming = await list("?when=upcoming");
+    expect(upcoming.matches.map((row) => row.id)).toEqual([
+      upcomingA.id,
+      upcomingB.id,
+      upcomingC.id,
+      cancelled.id,
+    ]);
+    expect(upcoming.matches.some((row) => row.id === past.id)).toBe(false);
+
+    const pastList = await list("?when=past");
+    expect(pastList.matches.map((row) => row.id)).toEqual([past.id]);
+
+    const cancelledList = await list("?status=cancelled");
+    expect(cancelledList.matches.map((row) => row.id)).toEqual([cancelled.id]);
+
+    const ranged = await list(
+      "?from=2028-02-01T00:00:00.000Z&to=2028-03-31T23:59:59.999Z",
+    );
+    expect(ranged.matches.map((row) => row.id)).toEqual([
+      upcomingB.id,
+      upcomingC.id,
+    ]);
+
+    const page1 = await list("?when=upcoming&limit=2");
+    expect(page1.matches).toHaveLength(2);
+    expect(page1.nextCursor).toEqual(expect.any(String));
+    const page2 = await list(
+      `?when=upcoming&limit=2&cursor=${encodeURIComponent(page1.nextCursor ?? "")}`,
+    );
+    expect(page2.matches).toHaveLength(2);
+    expect(page2.nextCursor).toBeNull();
+
+    const pagedIds = [...page1.matches, ...page2.matches].map((row) => row.id);
+    expect(pagedIds).toEqual([
+      upcomingA.id,
+      upcomingB.id,
+      upcomingC.id,
+      cancelled.id,
+    ]);
+    expect(new Set(pagedIds).size).toBe(pagedIds.length);
+  });
 });

@@ -2,18 +2,31 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CreateInviteForm } from "@/app/_components/create-invite-form";
 import { EmptyState } from "@/app/_components/empty-state";
+import { MatchList } from "@/app/_components/match-list";
+import { MatchListFilters } from "@/app/_components/match-list-filters";
 import { getServerSession } from "@/lib/http/server-session";
 import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
 import { getGroupsDeps } from "@/modules/groups/composition";
 import { getGroupDetail } from "@/modules/groups/domain/get-group";
 import { getMatchesDeps } from "@/modules/matches/composition";
 import { listMatchesForGroup } from "@/modules/matches/domain/list-matches";
-import { formatWallClock } from "@/modules/matches/domain/time-display";
+import { parseMatchListQuery } from "@/modules/matches/validation";
+
+const UI_MATCH_PAGE_SIZE = 10;
+
+function firstValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
 
 export default async function GroupDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ groupId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await getServerSession();
   if (!session) {
@@ -21,16 +34,25 @@ export default async function GroupDetailPage({
   }
 
   const { groupId } = await params;
+  const rawParams = searchParams ? await searchParams : {};
+  const query = new URLSearchParams();
+  for (const key of ["when", "status", "from", "to"] as const) {
+    const value = firstValue(rawParams[key]);
+    if (value) query.set(key, value);
+  }
+  const filters = parseMatchListQuery(query);
+
   try {
     const detail = await getGroupDetail(
       groupId,
       session.user.id,
       getGroupsDeps(),
     );
-    const { matches } = await listMatchesForGroup(
+    const { matches, nextCursor } = await listMatchesForGroup(
       groupId,
       session.user.id,
       getMatchesDeps(),
+      { ...filters, limit: UI_MATCH_PAGE_SIZE },
     );
     const isOrganizer = detail.role === "organizer";
 
@@ -79,6 +101,12 @@ export default async function GroupDetailPage({
               </Link>
             </p>
           ) : null}
+          <MatchListFilters
+            when={filters.when}
+            status={filters.status}
+            from={firstValue(rawParams.from)}
+            to={firstValue(rawParams.to)}
+          />
           {matches.length === 0 ? (
             <EmptyState
               title={isOrganizer ? "No matches scheduled" : "No upcoming matches"}
@@ -96,19 +124,12 @@ export default async function GroupDetailPage({
               )}
             </EmptyState>
           ) : (
-            <ul className="match-list">
-              {matches.map((match) => (
-                <li key={match.id}>
-                  <Link href={`/app/matches/${match.id}`}>
-                    {match.title}
-                    {match.status === "cancelled" ? " (cancelled)" : ""}
-                  </Link>
-                  <span className="match-list-meta">
-                    {formatWallClock(match.startAt, match.timezone)}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <MatchList
+              groupId={groupId}
+              initialMatches={matches}
+              initialCursor={nextCursor}
+              queryString={query.toString()}
+            />
           )}
         </section>
 
