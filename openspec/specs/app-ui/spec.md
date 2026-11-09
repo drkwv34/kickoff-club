@@ -106,3 +106,13 @@ When an organizer views a match that has started and a player is marked no-show,
 
 - **WHEN** an organizer opens a started match with a marked no-show
 - **THEN** an unmark control is visible for that player
+
+### Requirement: Match list filter controls
+
+The group detail matches section SHALL provide controls to filter by upcoming/past, status, and date range, and SHALL load additional pages when `nextCursor` is present.
+
+#### Scenario: Member filters the match list
+
+- **WHEN** a group member opens the group detail page
+- **THEN** match list filter controls are visible
+- **AND** submitting them updates the listed matches
