@@ -41,6 +41,11 @@ export type MembershipRepository = {
     groupId: string,
     userId: string,
   ): Promise<MembershipRecord>;
+  setNoShowCount(
+    groupId: string,
+    userId: string,
+    noShowCount: number,
+  ): Promise<MembershipRecord>;
 };
 
 export type InviteRepository = {

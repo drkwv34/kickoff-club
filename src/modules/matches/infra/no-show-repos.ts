@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { noShows } from "@/lib/db/schema";
+import { matches, noShows } from "@/lib/db/schema";
 import { mapUnknownError } from "@/lib/errors/domain-error";
 import type { NoShowRecord, NoShowRepository } from "../domain/ports";
 
@@ -26,6 +26,21 @@ export function createNoShowRepository(db: Db): NoShowRepository {
         .limit(1);
       return row ? toRecord(row) : null;
     },
+    async listByMatchId(matchId) {
+      const rows = await db
+        .select()
+        .from(noShows)
+        .where(eq(noShows.matchId, matchId));
+      return rows.map(toRecord);
+    },
+    async countForUserInGroup(groupId, userId) {
+      const [row] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(noShows)
+        .innerJoin(matches, eq(matches.id, noShows.matchId))
+        .where(and(eq(noShows.userId, userId), eq(matches.groupId, groupId)));
+      return row?.count ?? 0;
+    },
     async create(input) {
       try {
         const [row] = await db
@@ -42,6 +57,13 @@ export function createNoShowRepository(db: Db): NoShowRepository {
       } catch (err) {
         throw mapUnknownError(err);
       }
+    },
+    async deleteByMatchAndUser(matchId, userId) {
+      const rows = await db
+        .delete(noShows)
+        .where(and(eq(noShows.matchId, matchId), eq(noShows.userId, userId)))
+        .returning({ id: noShows.id });
+      return rows.length > 0;
     },
   };
 }

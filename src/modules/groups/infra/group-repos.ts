@@ -196,6 +196,22 @@ export function createMembershipRepository(db: Db): MembershipRepository {
       }
       return toMembership(row);
     },
+    async setNoShowCount(groupId, userId, noShowCount) {
+      const [row] = await db
+        .update(groupMemberships)
+        .set({ noShowCount })
+        .where(
+          and(
+            eq(groupMemberships.groupId, groupId),
+            eq(groupMemberships.userId, userId),
+          ),
+        )
+        .returning();
+      if (!row) {
+        throw new DomainError(DomainErrorCode.NOT_FOUND, "Member not found");
+      }
+      return toMembership(row);
+    },
   };
 }
 

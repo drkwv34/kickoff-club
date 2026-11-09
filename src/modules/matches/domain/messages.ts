@@ -18,3 +18,5 @@ export const NOT_GOING_FOR_NO_SHOW_MESSAGE =
   "Only players marked going can be recorded as no-shows";
 export const NO_SHOW_ALREADY_MARKED_MESSAGE =
   "This player was already marked as a no-show for this match";
+export const NO_SHOW_NOT_FOUND_MESSAGE =
+  "This player is not marked as a no-show for this match";

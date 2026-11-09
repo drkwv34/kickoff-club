@@ -502,3 +502,22 @@ input:focus-visible {
   flex-wrap: wrap;
   gap: var(--space-4);
 }
+
+.unmark-no-shows {
+  margin-top: var(--space-4);
+}
+
+.unmark-no-show-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.unmark-no-show-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}

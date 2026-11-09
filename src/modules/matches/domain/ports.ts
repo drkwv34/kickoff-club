@@ -82,12 +82,15 @@ export type NoShowRepository = {
     matchId: string,
     userId: string,
   ): Promise<NoShowRecord | null>;
+  listByMatchId(matchId: string): Promise<NoShowRecord[]>;
+  countForUserInGroup(groupId: string, userId: string): Promise<number>;
   create(input: {
     matchId: string;
     userId: string;
     markedBy: string;
     markedAt: Date;
   }): Promise<NoShowRecord>;
+  deleteByMatchAndUser(matchId: string, userId: string): Promise<boolean>;
 };
 
 export type MatchesDeps = {

@@ -11,6 +11,7 @@ import { presentMatchTimes } from "@/modules/matches/domain/time-display";
 import { getMatchRsvpSummary, getRsvpsDeps } from "@/modules/rsvps";
 import { MarkNoShowControls } from "@/app/_components/mark-no-show-controls";
 import { RsvpControls } from "@/app/_components/rsvp-controls";
+import { listNoShowsForMatch } from "@/modules/matches/domain/unmark-no-show";
 import { listGoingUserIdsForOrganizer } from "@/modules/rsvps/domain/list-going-for-organizer";
 
 export default async function MatchDetailPage({
@@ -59,8 +60,22 @@ export default async function MatchDetailPage({
             getRsvpsDeps(),
           )
         : [];
+    const markedNoShows =
+      isOrganizer && matchStarted && match.status === "scheduled"
+        ? await listNoShowsForMatch(
+            match.id,
+            session.user.id,
+            getMatchesDeps(),
+          )
+        : [];
+    const markedUserIds = new Set(markedNoShows.map((row) => row.userId));
     const noShowPlayers = groupDetail.members
-      .filter((m) => goingForNoShow.includes(m.userId))
+      .filter(
+        (m) => goingForNoShow.includes(m.userId) && !markedUserIds.has(m.userId),
+      )
+      .map((m) => ({ userId: m.userId, displayName: m.displayName }));
+    const markedPlayers = groupDetail.members
+      .filter((m) => markedUserIds.has(m.userId))
       .map((m) => ({ userId: m.userId, displayName: m.displayName }));
 
     return (
@@ -120,7 +135,11 @@ export default async function MatchDetailPage({
         ) : null}
 
         {isOrganizer && matchStarted && match.status === "scheduled" ? (
-          <MarkNoShowControls matchId={match.id} players={noShowPlayers} />
+          <MarkNoShowControls
+            matchId={match.id}
+            players={noShowPlayers}
+            markedPlayers={markedPlayers}
+          />
         ) : null}
       </main>
     );

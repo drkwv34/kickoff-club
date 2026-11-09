@@ -38,6 +38,7 @@ function buildDeps(overrides: Partial<MatchesDeps> = {}): MatchesDeps {
       updateRole: vi.fn(),
       delete: vi.fn(),
       incrementNoShowCount: vi.fn(),
+      setNoShowCount: vi.fn(),
     },
     rsvps: {
       findByMatchAndUser: vi.fn(),
@@ -50,7 +51,10 @@ function buildDeps(overrides: Partial<MatchesDeps> = {}): MatchesDeps {
     },
     noShows: {
       findByMatchAndUser: vi.fn(),
+      listByMatchId: vi.fn(),
+      countForUserInGroup: vi.fn(),
       create: vi.fn(),
+      deleteByMatchAndUser: vi.fn(),
     },
     clock: () => new Date("2020-01-02T12:00:00Z"),
     runInTransaction: async (work) =>
