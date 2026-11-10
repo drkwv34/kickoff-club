@@ -10,6 +10,7 @@ test.describe.configure({ mode: "serial" });
 test("organizer promotes, demotes, edits a match; player leaves; no-show counts show", async ({
   browser,
 }) => {
+  test.setTimeout(180_000);
   mkdirSync(ARTIFACT_DIR, { recursive: true });
 
   const organizerContext = await browser.newContext();

@@ -130,6 +130,17 @@ export default async function MatchDetailPage({
           matchOpen={matchOpen}
         />
 
+        {isOrganizer && match.status === "scheduled" ? (
+          <p className="organizer-actions">
+            <Link
+              className="btn btn-secondary"
+              href={`/app/matches/${match.id}/edit`}
+            >
+              Edit match
+            </Link>
+          </p>
+        ) : null}
+
         {isOrganizer && match.status === "scheduled" && !matchStarted ? (
           <CancelMatchButton matchId={match.id} />
         ) : null}

@@ -33,7 +33,7 @@ See proposal.md for motivation. `PATCH /api/v1/groups/:id/members/:userId`, `DEL
 ## Risks / Trade-offs
 
 - [Self-demote as last organizer] → API returns 409; UI shows `message` from the body.
-- [Stale member list after promote] → reload the group page on success.
+- [Stale member list after promote] → update the client list from the PATCH response; leave redirects to `/app`.
 - [Edit after match start] → still allowed for `scheduled` matches; cancelled matches have no edit link.
 
 ## Migration Plan

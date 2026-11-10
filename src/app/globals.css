@@ -293,6 +293,36 @@ input:focus-visible {
   gap: var(--space-3);
 }
 
+.member-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.member-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem var(--space-3);
+}
+
+.no-show-count {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.member-list-wrap .form-error {
+  margin-bottom: var(--space-3);
+}
+
 .group-card,
 .panel {
   background: var(--color-surface);
