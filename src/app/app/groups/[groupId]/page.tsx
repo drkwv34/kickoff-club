@@ -4,6 +4,7 @@ import { CreateInviteForm } from "@/app/_components/create-invite-form";
 import { EmptyState } from "@/app/_components/empty-state";
 import { MatchList } from "@/app/_components/match-list";
 import { MatchListFilters } from "@/app/_components/match-list-filters";
+import { MemberList } from "@/app/_components/member-list";
 import { getServerSession } from "@/lib/http/server-session";
 import { DomainError, DomainErrorCode } from "@/lib/errors/domain-error";
 import { getGroupsDeps } from "@/modules/groups/composition";
@@ -72,14 +73,12 @@ export default async function GroupDetailPage({
 
         <section aria-labelledby="members-heading">
           <h2 id="members-heading">Members</h2>
-          <ul className="member-list">
-            {detail.members.map((member) => (
-              <li key={member.userId}>
-                {member.displayName}{" "}
-                <span className="role-badge">{member.role}</span>
-              </li>
-            ))}
-          </ul>
+          <MemberList
+            groupId={groupId}
+            viewerUserId={session.user.id}
+            viewerRole={detail.role}
+            members={detail.members}
+          />
         </section>
 
         <section aria-labelledby="matches-heading">

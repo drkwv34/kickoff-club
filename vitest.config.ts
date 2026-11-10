@@ -2,9 +2,17 @@ import { defineConfig } from "vitest/config";
 import path from "node:path";
 
 export default defineConfig({
+  esbuild: {
+    jsx: "automatic",
+  },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "src/**/__tests__/**/*.ts"],
+    include: [
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+      "src/**/__tests__/**/*.ts",
+      "src/**/__tests__/**/*.tsx",
+    ],
     fileParallelism: false,
     env: {
       NODE_ENV: "test",

@@ -38,6 +38,15 @@ export function instantFromWallClockInZone(
   return new Date(ms);
 }
 
+export function wallClockInZone(
+  instant: Date | string,
+  timeZone: string,
+): { date: string; time: string } {
+  const date = typeof instant === "string" ? new Date(instant) : instant;
+  const parts = partsInTimeZone(date, timeZone);
+  return { date: parts.date, time: parts.time };
+}
+
 function partsInTimeZone(
   date: Date,
   timeZone: string,
