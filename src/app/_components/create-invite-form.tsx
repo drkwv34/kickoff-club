@@ -15,6 +15,7 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
   const csrf = useCsrfToken();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [invite, setInvite] = useState<Invite | null>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -22,6 +23,7 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
     if (!csrf) return;
     setPending(true);
     setError(null);
+    setFieldErrors({});
 
     const form = new FormData(event.currentTarget);
     const maxUsesRaw = String(form.get("maxUses") ?? "50");
@@ -43,9 +45,11 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
       });
       const body = (await res.json().catch(() => ({}))) as {
         message?: string;
+        fields?: Record<string, string>;
         invite?: Invite;
       };
       if (!res.ok || !body.invite) {
+        setFieldErrors(body.fields ?? {});
         setError(body.message ?? "Could not create invite");
         setPending(false);
         return;
@@ -72,11 +76,21 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
             max={50}
             defaultValue={50}
             disabled={pending || !csrf}
-            aria-describedby="maxUses-hint"
+            aria-describedby={
+              ["maxUses-hint", fieldErrors.maxUses && "maxUses-error"]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
+            aria-invalid={fieldErrors.maxUses ? true : undefined}
           />
           <p id="maxUses-hint" className="field-hint">
             How many players can use this invite link before it stops working.
           </p>
+          {fieldErrors.maxUses ? (
+            <p id="maxUses-error" className="field-error" role="alert">
+              {fieldErrors.maxUses}
+            </p>
+          ) : null}
         </div>
         <div className="field">
           <label htmlFor="invite-email">Email (optional)</label>
@@ -86,11 +100,21 @@ export function CreateInviteForm({ groupId }: { groupId: string }) {
             type="email"
             autoComplete="email"
             disabled={pending || !csrf}
-            aria-describedby="invite-email-hint"
+            aria-describedby={
+              ["invite-email-hint", fieldErrors.email && "invite-email-error"]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
+            aria-invalid={fieldErrors.email ? true : undefined}
           />
           <p id="invite-email-hint" className="field-hint">
             Send the invite code and accept link to this address.
           </p>
+          {fieldErrors.email ? (
+            <p id="invite-email-error" className="field-error" role="alert">
+              {fieldErrors.email}
+            </p>
+          ) : null}
         </div>
         <button type="submit" className="btn" disabled={pending || !csrf}>
           {pending ? "Creating…" : "Create invite link"}

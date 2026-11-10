@@ -37,6 +37,11 @@ type Props = {
   defaultSport: (typeof SPORTS)[number];
 };
 
+function describedBy(...ids: (string | false | undefined)[]): string | undefined {
+  const value = ids.filter(Boolean).join(" ");
+  return value || undefined;
+}
+
 export function CreateSeriesForm({
   groupId,
   defaultTimezone,
@@ -45,7 +50,7 @@ export function CreateSeriesForm({
   const csrf = useCsrfToken();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [, setFieldErrors] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [endMode, setEndMode] = useState<"count" | "until">("count");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -146,7 +151,21 @@ export function CreateSeriesForm({
 
       <div className="field">
         <label htmlFor="title">Title</label>
-        <input id="title" name="title" type="text" required maxLength={120} disabled={pending} />
+        <input
+          id="title"
+          name="title"
+          type="text"
+          required
+          maxLength={120}
+          disabled={pending}
+          aria-describedby={describedBy(fieldErrors.title && "series-title-error")}
+          aria-invalid={fieldErrors.title ? true : undefined}
+        />
+        {fieldErrors.title ? (
+          <p id="series-title-error" className="field-error" role="alert">
+            {fieldErrors.title}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
@@ -157,6 +176,8 @@ export function CreateSeriesForm({
           required
           disabled={pending}
           defaultValue={defaultSport}
+          aria-describedby={describedBy(fieldErrors.sport && "series-sport-error")}
+          aria-invalid={fieldErrors.sport ? true : undefined}
         >
           {SPORTS.map((sport) => (
             <option key={sport} value={sport}>
@@ -164,16 +185,48 @@ export function CreateSeriesForm({
             </option>
           ))}
         </select>
+        {fieldErrors.sport ? (
+          <p id="series-sport-error" className="field-error" role="alert">
+            {fieldErrors.sport}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
         <label htmlFor="venue">Venue</label>
-        <input id="venue" name="venue" type="text" required maxLength={200} disabled={pending} />
+        <input
+          id="venue"
+          name="venue"
+          type="text"
+          required
+          maxLength={200}
+          disabled={pending}
+          aria-describedby={describedBy(fieldErrors.venue && "series-venue-error")}
+          aria-invalid={fieldErrors.venue ? true : undefined}
+        />
+        {fieldErrors.venue ? (
+          <p id="series-venue-error" className="field-error" role="alert">
+            {fieldErrors.venue}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
         <label htmlFor="date">First date (match timezone)</label>
-        <input id="date" name="date" type="date" required disabled={pending} />
+        <input
+          id="date"
+          name="date"
+          type="date"
+          required
+          disabled={pending}
+          aria-describedby={describedBy(fieldErrors.startAt && "series-date-error")}
+          aria-invalid={fieldErrors.startAt ? true : undefined}
+        />
+        {fieldErrors.startAt ? (
+          <p id="series-date-error" className="field-error" role="alert">
+            {fieldErrors.startAt}
+          </p>
+        ) : null}
       </div>
 
       <div className="field-row">
@@ -183,7 +236,20 @@ export function CreateSeriesForm({
         </div>
         <div className="field">
           <label htmlFor="endTime">End time</label>
-          <input id="endTime" name="endTime" type="time" required disabled={pending} />
+          <input
+            id="endTime"
+            name="endTime"
+            type="time"
+            required
+            disabled={pending}
+            aria-describedby={describedBy(fieldErrors.endAt && "series-end-error")}
+            aria-invalid={fieldErrors.endAt ? true : undefined}
+          />
+          {fieldErrors.endAt ? (
+            <p id="series-end-error" className="field-error" role="alert">
+              {fieldErrors.endAt}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -197,15 +263,29 @@ export function CreateSeriesForm({
           defaultValue={defaultTimezone}
           required
           disabled={pending}
+          aria-describedby={describedBy(
+            fieldErrors.timezone && "series-timezone-error",
+          )}
+          aria-invalid={fieldErrors.timezone ? true : undefined}
         />
         <datalist id="series-timezone-options">
           {COMMON_TIMEZONES.map((zone) => (
             <option key={zone} value={zone} />
           ))}
         </datalist>
+        {fieldErrors.timezone ? (
+          <p id="series-timezone-error" className="field-error" role="alert">
+            {fieldErrors.timezone}
+          </p>
+        ) : null}
       </div>
 
-      <fieldset className="field">
+      <fieldset
+        className="field"
+        aria-describedby={describedBy(
+          fieldErrors["recurrence.byWeekday"] && "series-weekdays-error",
+        )}
+      >
         <legend>Repeat on</legend>
         {WEEKDAYS.map((day) => (
           <label key={day} className="checkbox-inline">
@@ -213,6 +293,11 @@ export function CreateSeriesForm({
             {WEEKDAY_LABEL[day]}
           </label>
         ))}
+        {fieldErrors["recurrence.byWeekday"] ? (
+          <p id="series-weekdays-error" className="field-error" role="alert">
+            {fieldErrors["recurrence.byWeekday"]}
+          </p>
+        ) : null}
       </fieldset>
 
       <div className="field">
@@ -226,7 +311,16 @@ export function CreateSeriesForm({
           defaultValue={1}
           required
           disabled={pending}
+          aria-describedby={describedBy(
+            fieldErrors["recurrence.interval"] && "series-interval-error",
+          )}
+          aria-invalid={fieldErrors["recurrence.interval"] ? true : undefined}
         />
+        {fieldErrors["recurrence.interval"] ? (
+          <p id="series-interval-error" className="field-error" role="alert">
+            {fieldErrors["recurrence.interval"]}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
@@ -255,12 +349,36 @@ export function CreateSeriesForm({
             defaultValue={4}
             required
             disabled={pending}
+            aria-describedby={describedBy(
+              fieldErrors["recurrence.count"] && "series-count-error",
+            )}
+            aria-invalid={fieldErrors["recurrence.count"] ? true : undefined}
           />
+          {fieldErrors["recurrence.count"] ? (
+            <p id="series-count-error" className="field-error" role="alert">
+              {fieldErrors["recurrence.count"]}
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="field">
           <label htmlFor="until">Until date (YYYY-MM-DD)</label>
-          <input id="until" name="until" type="date" required disabled={pending} />
+          <input
+            id="until"
+            name="until"
+            type="date"
+            required
+            disabled={pending}
+            aria-describedby={describedBy(
+              fieldErrors["recurrence.until"] && "series-until-error",
+            )}
+            aria-invalid={fieldErrors["recurrence.until"] ? true : undefined}
+          />
+          {fieldErrors["recurrence.until"] ? (
+            <p id="series-until-error" className="field-error" role="alert">
+              {fieldErrors["recurrence.until"]}
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -275,12 +393,36 @@ export function CreateSeriesForm({
           defaultValue={10}
           required
           disabled={pending}
+          aria-describedby={describedBy(
+            fieldErrors.capacity && "series-capacity-error",
+          )}
+          aria-invalid={fieldErrors.capacity ? true : undefined}
         />
+        {fieldErrors.capacity ? (
+          <p id="series-capacity-error" className="field-error" role="alert">
+            {fieldErrors.capacity}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
         <label htmlFor="description">Description (optional)</label>
-        <textarea id="description" name="description" rows={3} maxLength={2000} disabled={pending} />
+        <textarea
+          id="description"
+          name="description"
+          rows={3}
+          maxLength={2000}
+          disabled={pending}
+          aria-describedby={describedBy(
+            fieldErrors.description && "series-description-error",
+          )}
+          aria-invalid={fieldErrors.description ? true : undefined}
+        />
+        {fieldErrors.description ? (
+          <p id="series-description-error" className="field-error" role="alert">
+            {fieldErrors.description}
+          </p>
+        ) : null}
       </div>
 
       <button type="submit" className="btn" disabled={pending || !csrf}>

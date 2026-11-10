@@ -137,6 +137,10 @@ export function CreateMatchForm({
           required
           disabled={pending}
           defaultValue={defaultSport}
+          aria-describedby={
+            fieldErrors.sport ? "match-sport-error" : undefined
+          }
+          aria-invalid={fieldErrors.sport ? true : undefined}
         >
           {SPORTS.map((sport) => (
             <option key={sport} value={sport}>
@@ -144,6 +148,11 @@ export function CreateMatchForm({
             </option>
           ))}
         </select>
+        {fieldErrors.sport ? (
+          <p id="match-sport-error" className="field-error" role="alert">
+            {fieldErrors.sport}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
@@ -196,9 +205,21 @@ export function CreateMatchForm({
         </div>
         <div className="field">
           <label htmlFor="endTime">End time</label>
-          <input id="endTime" name="endTime" type="time" required disabled={pending} />
+          <input
+            id="endTime"
+            name="endTime"
+            type="time"
+            required
+            disabled={pending}
+            aria-describedby={
+              fieldErrors.endAt ? "match-end-error" : undefined
+            }
+            aria-invalid={fieldErrors.endAt ? true : undefined}
+          />
           {fieldErrors.endAt ? (
-            <p className="field-error">{fieldErrors.endAt}</p>
+            <p id="match-end-error" className="field-error" role="alert">
+              {fieldErrors.endAt}
+            </p>
           ) : null}
         </div>
       </div>
