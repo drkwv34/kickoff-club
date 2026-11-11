@@ -47,7 +47,7 @@ Mailpit (captured email): http://localhost:8025
 | **Docker Compose** | Postgres, Mailpit, migrate job, and app for one-command review |
 | **Vitest** | Unit + HTTP integration tests against real Postgres |
 | **Playwright** | Browser critical path in CI (`e2e/`) |
-| **GitHub Actions** | `quality` job: lint → typecheck → migrate → seed ×2 → test → build → e2e → OpenSpec validate |
+| **GitHub Actions** | `quality` job: lint → typecheck → migrate → seed ×2 → test → build → e2e → OpenSpec validate; `production-image` job builds Compose and smokes `/api/ready` |
 | **OpenSpec** (`@fission-ai/openspec`) | Proposal gate for non-trivial features (`openspec/`) |
 
 Package manager: **pnpm** (lockfile committed).
@@ -59,7 +59,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Compose starts Postgres, runs **migrations** (`migrate` service), Mailpit, then the Next.js app on http://localhost:3000.
+Compose starts Postgres, runs **migrations** (`migrate` service), Mailpit, then the Next.js **production** server (`pnpm start` after `next build`) on http://localhost:3000.
 
 ### Local app without Compose (Postgres still required)
 
@@ -92,7 +92,7 @@ pnpm build
 pnpm test:e2e       # Playwright (see e2e/README.md)
 ```
 
-Pull requests and `main` run the **`quality`** workflow in `.github/workflows/ci.yml`.
+Pull requests and `main` run the **`quality`** and **`production-image`** jobs in `.github/workflows/ci.yml`.
 
 ## Architecture sketch
 
