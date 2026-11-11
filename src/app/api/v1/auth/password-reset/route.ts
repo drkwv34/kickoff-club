@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { loadEnv } from "@/lib/config/env";
 import { applyCsrfCookie, assertCsrf, issueCsrfToken } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
+import { assertNotRateLimited } from "@/lib/http/rate-limit";
 import { getAuthDeps } from "@/modules/auth/composition";
 import { requestPasswordReset } from "@/modules/auth/domain/password-reset";
 import {
@@ -19,6 +20,7 @@ export async function POST(request: Request): Promise<Response> {
     "POST /api/v1/auth/password-reset",
     async ({ logger }) => {
       assertCsrf(request);
+      assertNotRateLimited(request, "password-reset");
       const parsed = passwordResetRequestBodySchema.safeParse(
         await parseJsonBody(request),
       );

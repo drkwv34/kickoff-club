@@ -33,6 +33,10 @@ describe("domain error HTTP mapping", () => {
   it("maps CSRF_REJECTED to 403", () => {
     expect(httpStatusForDomainCode(DomainErrorCode.CSRF_REJECTED)).toBe(403);
   });
+
+  it("maps RATE_LIMITED to 429", () => {
+    expect(httpStatusForDomainCode(DomainErrorCode.RATE_LIMITED)).toBe(429);
+  });
 });
 
 describe("mapUnknownError", () => {

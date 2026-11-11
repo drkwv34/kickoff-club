@@ -22,6 +22,7 @@ Route handlers map domain errors to HTTP status:
 | Not found | 404 | Avoid existence leaks on auth-sensitive resources |
 | Conflict / invariant | 409 | `code` (e.g. `LAST_ORGANIZER`) |
 | Gone / expired invite | 410 | When FR specifies |
+| Rate limited | 429 | `RATE_LIMITED` plus `Retry-After` |
 | Unexpected / infra | 500 | Generic message; **no stack traces** to clients |
 
 **User-visible vs internal:** Clients receive `code`, safe `message`, and optional `details`. Logs include `requestId`, `code`, and internal context (never passwords, session tokens, or raw SMTP credentials).
