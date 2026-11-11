@@ -12,4 +12,9 @@ describe("README session and performance docs", () => {
     expect(readme).toMatch(/14-day idle/i);
     expect(readme).toMatch(/30-day absolute/i);
   });
+
+  it("records the Compose autocannon p95", () => {
+    expect(readme).toMatch(/50 connections/i);
+    expect(readme).toMatch(/p95 \d+ ms/i);
+  });
 });

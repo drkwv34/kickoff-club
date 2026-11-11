@@ -142,7 +142,15 @@ Deeper docs: [`docs/architecture/`](docs/architecture/) · OpenSpec: [`openspec/
 - **Authz** — Group **organizer** vs **player** roles; demoting or removing the **last organizer** returns `409 LAST_ORGANIZER`. Match management checks membership + role in domain policies.
 - **Waitlist races** — Cancelling a `going` RSVP promotes the earliest waitlisted row in the **same transaction** as the cancel, with `SELECT … FOR UPDATE` on the match so `going_count` cannot exceed capacity under concurrency. See [`docs/architecture/transactionality.md`](docs/architecture/transactionality.md).
 - **Timezones** — Users register with an IANA timezone; groups have `home_timezone`; matches store `start_at`/`end_at` as UTC instants plus a display timezone. UI helpers format wall-clock times for viewers (see `src/modules/matches/domain/time-display.ts`).
-- **Sessions & CSRF** — HttpOnly session cookie; mutating `/api/v1` routes require double-submit CSRF (`kickoff_csrf` cookie + `X-CSRF-Token`).
+- **Sessions & CSRF** — HttpOnly session cookie `kickoff_session`. Idle TTL is a **14-day idle** window from last authenticated API use; absolute TTL is a **30-day absolute** cap from session creation (see `src/modules/auth/domain/session.ts`). Mutating `/api/v1` routes require double-submit CSRF (`kickoff_csrf` cookie + `X-CSRF-Token`).
+- **Load** — `pnpm perf` runs autocannon with **50 connections** against local Compose `GET /api/ready`. Measured snapshot on this stack: **p95 45 ms** (p90 38 ms, p97.5 48 ms; 18,880 requests in 11.01s, 0 errors). Re-run with:
+
+```bash
+docker compose up --build
+pnpm perf
+# equivalent: pnpm exec autocannon -c 50 -d 10 -l http://127.0.0.1:3000/api/ready
+```
+
 
 ## Trade-offs / what I'd do differently
 
