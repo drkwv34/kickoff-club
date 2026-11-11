@@ -28,6 +28,7 @@ export default defineConfig({
       NODE_ENV: "production",
       PORT: port,
       APP_BASE_URL: baseURL,
+      AUTH_RATE_LIMIT_MAX: process.env.AUTH_RATE_LIMIT_MAX ?? "10000",
     },
   },
 });
