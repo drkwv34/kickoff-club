@@ -50,6 +50,12 @@ export async function handleApi(
     }
     const response = NextResponse.json(toPublicErrorBody(mapped), { status });
     response.headers.set("x-request-id", requestId);
+    if (mapped.code === DomainErrorCode.RATE_LIMITED) {
+      const retryAfter = Number(mapped.details?.retryAfterSeconds);
+      const seconds =
+        Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 1;
+      response.headers.set("Retry-After", String(seconds));
+    }
     return response;
   }
 }

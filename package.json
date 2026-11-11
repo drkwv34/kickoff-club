@@ -17,7 +17,8 @@
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:verify": "tsx src/lib/db/verify-schema.ts",
     "db:seed": "tsx src/lib/db/seed.ts",
-    "openspec:validate": "npx --yes @fission-ai/openspec@latest validate --all"
+    "openspec:validate": "npx --yes @fission-ai/openspec@latest validate --all",
+    "perf": "node scripts/perf/load.mjs"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.1",
@@ -39,6 +40,7 @@
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "autocannon": "^9.0.0",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9.36.0",
     "eslint-config-next": "^15.5.4",

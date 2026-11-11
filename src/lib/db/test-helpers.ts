@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { loadEnv } from "@/lib/config/env";
+import { resetAuthRateLimitForTests } from "@/lib/http/rate-limit";
 
 let migrated = false;
 let adminSql: ReturnType<typeof postgres> | null = null;
@@ -26,6 +27,7 @@ export async function ensureTestSchema(): Promise<void> {
 }
 
 export async function resetAuthTables(): Promise<void> {
+  resetAuthRateLimitForTests();
   const sql = await getTestSql();
   await sql`TRUNCATE TABLE no_shows, notification_preferences, notifications, rsvps, matches, match_series, group_invites, group_memberships, groups, password_reset_tokens, sessions, users RESTART IDENTITY CASCADE`;
 }

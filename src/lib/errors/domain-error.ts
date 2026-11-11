@@ -12,6 +12,7 @@ export const DomainErrorCode = {
   GONE: "GONE",
   CONFLICT: "CONFLICT",
   UNIQUE_VIOLATION: "UNIQUE_VIOLATION",
+  RATE_LIMITED: "RATE_LIMITED",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
 
@@ -32,6 +33,7 @@ const HTTP_BY_CODE: Record<string, number> = {
   [DomainErrorCode.CONFLICT]: 409,
   [DomainErrorCode.UNIQUE_VIOLATION]: 409,
   [DomainErrorCode.GONE]: 410,
+  [DomainErrorCode.RATE_LIMITED]: 429,
   [DomainErrorCode.INTERNAL_ERROR]: 500,
 };
 

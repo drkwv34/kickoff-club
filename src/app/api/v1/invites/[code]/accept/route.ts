@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/http/auth-cookies";
 import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi } from "@/lib/http/handle-api";
+import { assertNotRateLimited } from "@/lib/http/rate-limit";
 import { getGroupsDeps } from "@/modules/groups/composition";
 import { acceptInvite } from "@/modules/groups/domain/accept-invite";
 import { getNotificationsDeps } from "@/modules/notifications";
@@ -21,6 +22,7 @@ export async function POST(
     "POST /api/v1/invites/:code/accept",
     async ({ logger }) => {
       assertCsrf(request);
+      assertNotRateLimited(request, "invite-accept");
       const session = await requireSession(request);
       const { code } = await context.params;
       const result = await acceptInvite(code, session.user.id, getGroupsDeps());

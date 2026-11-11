@@ -79,3 +79,28 @@ jobs:
 
       - name: OpenSpec validate
         run: pnpm openspec:validate
+
+  production-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and start Compose
+        run: docker compose up --build -d --wait
+
+      - name: Smoke /api/ready
+        run: |
+          body=$(curl -sf http://localhost:3000/api/ready)
+          echo "$body"
+          echo "$body" | grep -q '"status":"ready"' || echo "$body" | grep -q '"status": "ready"'
+
+      - name: Confirm production server
+        run: |
+          html=$(curl -sf http://localhost:3000/login)
+          echo "$html" | grep -viq "nextjs-portal"
+          echo "$html" | grep -viq "__nextjs"
+
+      - name: Stop Compose
+        if: always()
+        run: docker compose down -v

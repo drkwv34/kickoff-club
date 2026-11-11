@@ -8,6 +8,7 @@ import {
 import { applyAuthCookies } from "@/lib/http/auth-cookies";
 import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
+import { assertNotRateLimited } from "@/lib/http/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request): Promise<Response> {
   return handleApi(request, "POST /api/v1/auth/register", async ({ logger }) => {
     assertCsrf(request);
+    assertNotRateLimited(request, "register");
     const parsed = registerBodySchema.safeParse(await parseJsonBody(request));
     if (!parsed.success) {
       throw validationErrorFromZod(parsed.error);

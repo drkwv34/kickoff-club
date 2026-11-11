@@ -3,6 +3,7 @@ import { loadEnv } from "@/lib/config/env";
 import { requireSession } from "@/lib/http/auth-cookies";
 import { assertCsrf } from "@/lib/http/csrf";
 import { handleApi, parseJsonBody } from "@/lib/http/handle-api";
+import { assertNotRateLimited } from "@/lib/http/rate-limit";
 import { getGroupsDeps } from "@/modules/groups/composition";
 import { createInvite } from "@/modules/groups/domain/create-invite";
 import { sendInviteEmail } from "@/modules/groups/infra/invite-code";
@@ -26,6 +27,7 @@ export async function POST(
     "POST /api/v1/groups/:id/invites",
     async ({ logger }) => {
       assertCsrf(request);
+      assertNotRateLimited(request, "invite-create");
       const session = await requireSession(request);
       const { groupId } = await context.params;
       const parsed = createInviteBodySchema.safeParse(
